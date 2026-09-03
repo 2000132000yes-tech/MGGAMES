@@ -50,7 +50,7 @@
       border: 1px solid #334155;
     }
 
-    /* 캔버스 영역 (비율 깨짐 방지) */
+    /* 캔버스 영역 */
     #canvasWrapper {
       position: relative;
       width: 100%;
@@ -67,15 +67,35 @@
       border-radius: 12px;
       aspect-ratio: 360 / 520;
       max-width: 95vw;
-      max-height: 52vh;
+      max-height: 50vh;
       object-fit: contain;
       box-shadow: 0 8px 20px rgba(0,0,0,0.8);
     }
 
-    /* 하단 조작 영역 (위로 끌어올림) */
+    /* 화면 상단 알림 메시지 텍스트 */
+    #notificationText {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: bold;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid #64748b;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 30;
+      white-space: nowrap;
+    }
+
+    /* 하단 조작 영역 (버튼 안 짤리도록 여백 확장 및 위로 조정) */
     .controls-container {
       width: 100%;
-      padding: 16px 20px 45px 20px; /* 하단 패딩을 대폭 늘려 위로 업 */
+      padding: 14px 20px 60px 20px;
       background: #0f172a;
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
@@ -88,8 +108,8 @@
 
     /* 조이스틱 */
     #joystickZone {
-      width: 105px;
-      height: 105px;
+      width: 100px;
+      height: 100px;
       background: rgba(30, 58, 138, 0.4);
       border: 2px solid #3b82f6;
       border-radius: 50%;
@@ -97,14 +117,14 @@
       touch-action: none;
     }
     #joystickKnob {
-      width: 45px;
-      height: 45px;
+      width: 42px;
+      height: 42px;
       background: #60a5fa;
       border: 2px solid #ffffff;
       border-radius: 50%;
       position: absolute;
-      top: 28px;
-      left: 28px;
+      top: 27px;
+      left: 27px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.5);
     }
 
@@ -156,18 +176,15 @@
   </div>
 
   <div id="canvasWrapper">
-    <!-- 정비율 해상도 (360 x 520) -->
+    <div id="notificationText">알을 훔쳐왔습니다!</div>
     <canvas id="gameCanvas" width="360" height="520"></canvas>
   </div>
 
-  <!-- 하단 컨트롤 영역 -->
   <div class="controls-container">
-    <!-- 조이스틱 -->
     <div id="joystickZone">
       <div id="joystickKnob"></div>
     </div>
 
-    <!-- 버튼 모음 -->
     <div class="btn-group">
       <button class="btn btn-treadmill" onclick="runTreadmill()">🏃 런닝머신 (+2)</button>
       <button id="pickupBtn" class="btn btn-pickup" style="display: none;" onclick="pickUpEgg()">🖐️ 알 줍기!</button>
@@ -186,7 +203,7 @@
     const playerWorld = { x: 100, y: 260, size: 24 };
 
     // 내 기지
-    const myBaseWorld = { x: -50, y: 50, w: 180, h: 420 };
+    const myBaseWorld = { x: -50, y: 50, w: 220, h: 420 };
 
     const baseInstalledEggs = [];
     let fieldEggs = [];
@@ -194,26 +211,39 @@
     let lastResetTime = Date.now();
     const RESET_INTERVAL = 30000;
 
-    // 맵 수직/수평 경계
+    // 맵 크기 2배 확장 (-50 ~ 3850)
     const MAP_LIMIT = {
       minY: 40,
       maxY: 480,
       minX: -50,
-      maxX: 1950
+      maxX: 3850
     };
 
-    // 구역 설정
+    // 구역 설정 (크기 2배 확장)
     const ZONES = [
-      { name: "안전 구역", minX: -50, maxX: 250, bgColor: "#15803d" },
-      { name: "기본 알 구역", minX: 250, maxX: 650, bgColor: "#1e3a8a", eggType: { name: "기본 알", reqSpeed: 5, color: "#ffffff", pattern: "#cbd5e1", hatchTime: 5, bonus: 3 } },
-      { name: "정글 구역", minX: 650, maxX: 1080, bgColor: "#064e3b", eggType: { name: "정글 전갈 알 🦂", reqSpeed: 9, color: "#10b981", pattern: "#065f46", hatchTime: 10, bonus: 5 } },
-      { name: "코스믹 구역", minX: 1080, maxX: 1500, bgColor: "#4c1d95", eggType: { name: "코스믹 알 🌌", reqSpeed: 15, color: "#a855f7", pattern: "#581c87", hatchTime: 18, bonus: 8 } },
-      { name: "피닉스 구역", minX: 1500, maxX: 1950, bgColor: "#7f1d1d", eggType: { name: "🔥 피닉스 알", reqSpeed: 23, color: "#ef4444", pattern: "#7f1d1d", hatchTime: 30, bonus: 15 } }
+      { name: "안전 구역", minX: -50, maxX: 500, bgColor: "#15803d" },
+      { name: "기본 알 구역", minX: 500, maxX: 1300, bgColor: "#1e3a8a", eggType: { name: "기본 알", reqSpeed: 5, color: "#ffffff", pattern: "#cbd5e1", hatchTime: 5, bonus: 3 } },
+      { name: "정글 구역", minX: 1300, maxX: 2160, bgColor: "#064e3b", eggType: { name: "정글 전갈 알 🦂", reqSpeed: 9, color: "#10b981", pattern: "#065f46", hatchTime: 10, bonus: 5 } },
+      { name: "코스믹 구역", minX: 2160, maxX: 3000, bgColor: "#4c1d95", eggType: { name: "코스믹 알 🌌", reqSpeed: 15, color: "#a855f7", pattern: "#581c87", hatchTime: 18, bonus: 8 } },
+      { name: "피닉스 구역", minX: 3000, maxX: 3850, bgColor: "#7f1d1d", eggType: { name: "🔥 피닉스 알", reqSpeed: 23, color: "#ef4444", pattern: "#7f1d1d", hatchTime: 30, bonus: 15 } }
     ];
 
     let moveInput = { x: 0, y: 0 };
     let eggToPickUp = null;
     let nearbyEggToHatch = null;
+    let notifTimeout = null;
+
+    // 화면 상단에 하얀색 글씨 알림 띄우기 함수
+    function showNotification(msg) {
+      const el = document.getElementById("notificationText");
+      el.innerText = msg;
+      el.style.opacity = "1";
+
+      if (notifTimeout) clearTimeout(notifTimeout);
+      notifTimeout = setTimeout(() => {
+        el.style.opacity = "0";
+      }, 2000);
+    }
 
     function spawnFieldEggs() {
       fieldEggs = [];
@@ -221,7 +251,7 @@
         if (!zone.eggType) return;
         const count = Math.floor(Math.random() * 3) + 3;
         for (let i = 0; i < count; i++) {
-          const rx = zone.minX + Math.random() * (zone.maxX - zone.minX - 80) + 40;
+          const rx = zone.minX + Math.random() * (zone.maxX - zone.minX - 120) + 60;
           const ry = MAP_LIMIT.minY + 30 + Math.random() * (MAP_LIMIT.maxY - MAP_LIMIT.minY - 60);
           fieldEggs.push({
             x: rx,
@@ -337,7 +367,7 @@
 
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 13px Arial";
-      ctx.fillText("내 기지 🏡", baseSX + 55, baseSY + 25);
+      ctx.fillText("내 기지 🏡", baseSX + 75, baseSY + 25);
 
       const now = Date.now();
       nearbyEggToHatch = null;
@@ -411,7 +441,7 @@
         if (idx !== -1) fieldEggs.splice(idx, 1);
         eggToPickUp = null;
       } else {
-        alert(`속도가 부족합니다!\n필요 속도: [${eggToPickUp.reqSpeed}] / 현재 속도: [${speed}]`);
+        showNotification(`속도가 부족합니다! (필요: ${eggToPickUp.reqSpeed})`);
       }
     }
 
@@ -420,7 +450,7 @@
       const startY = myBaseWorld.y + 60;
       const gapX = 38;
       const gapY = 40;
-      const cols = 3;
+      const cols = 4;
 
       const idx = baseInstalledEggs.length;
       const col = idx % cols;
@@ -445,7 +475,9 @@
           hatchEndTime: Date.now() + holding.hatchTime * 1000
         });
 
-        alert(`🏡 [${holding.name}] 보관 완료!\n(${holding.hatchTime}초 후 부화 가능)`);
+        // 팝업창(alert) 대신 화면 상단 알림 표시!
+        showNotification("알을 훔쳐왔습니다!");
+
         holding = null;
         document.getElementById("holdingVal").innerText = "없음";
       }
@@ -458,7 +490,7 @@
       if (idx !== -1) {
         speed += nearbyEggToHatch.bonus;
         document.getElementById("speedVal").innerText = speed;
-        alert(`🎉 [${nearbyEggToHatch.name}] 부화 성공!\n이동 속도가 +${nearbyEggToHatch.bonus} 상승했습니다!`);
+        showNotification(`🎉 부화 성공! 속도 +${nearbyEggToHatch.bonus}`);
         baseInstalledEggs.splice(idx, 1);
       }
     }
@@ -466,6 +498,7 @@
     function runTreadmill() {
       speed += 2;
       document.getElementById("speedVal").innerText = speed;
+      showNotification("🏃 속도가 +2 증가했습니다!");
     }
 
     /* 조이스틱 */
