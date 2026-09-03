@@ -2,80 +2,151 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>숫자 맞추기 게임</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>뱀 게임 (Snake Game)</title>
   <style>
     body {
+      background-color: #222;
+      color: white;
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 50px;
-      background-color: #f0f8ff;
+      margin: 0;
+      padding: 20px;
+      touch-action: manipulation;
     }
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      display: inline-block;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    h1 { margin-bottom: 10px; }
+    #score { font-size: 20px; margin-bottom: 15px; }
+    canvas {
+      background-color: #000;
+      border: 3px solid #00ffcc;
+      box-shadow: 0 0 15px #00ffcc;
+      max-width: 90vw;
+      max-height: 50vh;
     }
-    input {
-      font-size: 18px;
-      padding: 8px;
-      width: 100px;
-      text-align: center;
+    /* 태블릿 터치용 방향키 버튼 */
+    .controls {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      grid-gap: 10px;
+      justify-content: center;
     }
-    button {
-      font-size: 18px;
-      padding: 8px 16px;
-      background-color: #007bff;
+    .btn {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      background: #444;
       color: white;
       border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      border-radius: 10px;
+      active { background: #666; }
     }
-    #result {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-    }
+    .empty { visibility: hidden; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>🎯 숫자 맞추기 게임</h1>
-    <p>1부터 50 사이의 숫자를 맞춰보세요!</p>
-    <input type="number" id="guessInput" min="1" max="50">
-    <button onclick="checkGuess()">확인</button>
-    <div id="result"></div>
+
+  <h1>🐍 스네이크 게임</h1>
+  <div id="score">점수: 0</div>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+  <!-- 태블릿 터치 조작 버튼 -->
+  <div class="controls">
+    <div class="empty"></div>
+    <button class="btn" onclick="changeDir('UP')">⬆️</button>
+    <div class="empty"></div>
+    <button class="btn" onclick="changeDir('LEFT')">⬅️</button>
+    <button class="btn" onclick="changeDir('DOWN')">⬇️</button>
+    <button class="btn" onclick="changeDir('RIGHT')">➡️</button>
   </div>
 
   <script>
-    const randomNumber = Math.floor(Math.random() * 50) + 1;
-    let count = 0;
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
 
-    function checkGuess() {
-      const userGuess = parseInt(document.getElementById('guessInput').value);
-      const resultDiv = document.getElementById('result');
-      
-      if (!userGuess || userGuess < 1 || userGuess > 50) {
-        resultDiv.innerText = "1부터 50 사이의 숫자를 입력해 주세요.";
-        resultDiv.style.color = "orange";
-        return;
-      }
+    const box = 20;
+    let score = 0;
+    let d = "RIGHT";
 
-      count++;
+    let snake = [];
+    snake[0] = { x: 9 * box, y: 10 * box };
 
-      if (userGuess === randomNumber) {
-        resultDiv.innerText = `🎉 정답입니다! (${count}번 만에 맞춤)`;
-        resultDiv.style.color = "green";
-      } else if (userGuess > randomNumber) {
-        resultDiv.innerText = "DOWN! 더 작은 숫자입니다.";
-        resultDiv.style.color = "red";
-      } else {
-        resultDiv.innerText = "UP! 더 큰 숫자입니다.";
-        resultDiv.style.color = "red";
-      }
+    let food = {
+      x: Math.floor(Math.random() * 19 + 1) * box,
+      y: Math.floor(Math.random() * 19 + 1) * box
+    };
+
+    // 키보드 조작 (키보드 연결 시 가능)
+    document.addEventListener("keydown", direction);
+    function direction(event) {
+      if (event.keyCode == 37 && d != "RIGHT") d = "LEFT";
+      else if (event.keyCode == 38 && d != "DOWN") d = "UP";
+      else if (event.keyCode == 39 && d != "LEFT") d = "RIGHT";
+      else if (event.keyCode == 40 && d != "UP") d = "DOWN";
     }
+
+    // 터치 버튼 조작
+    function changeDir(newDir) {
+      if (newDir == "LEFT" && d != "RIGHT") d = "LEFT";
+      if (newDir == "UP" && d != "DOWN") d = "UP";
+      if (newDir == "RIGHT" && d != "LEFT") d = "RIGHT";
+      if (newDir == "DOWN" && d != "UP") d = "DOWN";
+    }
+
+    function draw() {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = (i == 0) ? "#00ffcc" : "#ffffff";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+        ctx.strokeStyle = "#000";
+        ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+      }
+
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x, food.y, box, box);
+
+      let snakeX = snake[0].x;
+      let snakeY = snake[0].y;
+
+      if (d == "LEFT") snakeX -= box;
+      if (d == "UP") snakeY -= box;
+      if (d == "RIGHT") snakeX += box;
+      if (d == "DOWN") snakeY += box;
+
+      if (snakeX == food.x && snakeY == food.y) {
+        score++;
+        scoreElement.innerText = "점수: " + score;
+        food = {
+          x: Math.floor(Math.random() * 19 + 1) * box,
+          y: Math.floor(Math.random() * 19 + 1) * box
+        };
+      } else {
+        snake.pop();
+      }
+
+      let newHead = { x: snakeX, y: snakeY };
+
+      // 충돌 검사 (벽 또는 자신과 충돌)
+      if (snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+        clearInterval(game);
+        alert("게임 오버! 최종 점수: " + score);
+        location.reload();
+      }
+
+      snake.unshift(newHead);
+    }
+
+    function collision(head, array) {
+      for (let i = 0; i < array.length; i++) {
+        if (head.x == array[i].x && head.y == array[i].y) return true;
+      }
+      return false;
+    }
+
+    let game = setInterval(draw, 120);
   </script>
 </body>
 </html>
