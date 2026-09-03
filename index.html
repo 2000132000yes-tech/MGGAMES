@@ -3,150 +3,219 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>뱀 게임 (Snake Game)</title>
+  <title>알 훔치기: 인큐베이터 멸망전</title>
   <style>
     body {
-      background-color: #222;
+      background-color: #121212;
       color: white;
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 0;
-      padding: 20px;
-      touch-action: manipulation;
+      padding: 10px;
     }
-    h1 { margin-bottom: 10px; }
-    #score { font-size: 20px; margin-bottom: 15px; }
+    .status {
+      background: #1f1f1f;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
     canvas {
-      background-color: #000;
-      border: 3px solid #00ffcc;
-      box-shadow: 0 0 15px #00ffcc;
-      max-width: 90vw;
-      max-height: 50vh;
+      background: #2a2a2a;
+      border: 3px solid #ff0055;
+      border-radius: 10px;
+      max-width: 95vw;
+      max-height: 40vh;
     }
-    /* 태블릿 터치용 방향키 버튼 */
-    .controls {
-      margin-top: 15px;
-      display: grid;
-      grid-template-columns: repeat(3, 60px);
-      grid-gap: 10px;
-      justify-content: center;
+    .incubator-panel {
+      background: #1e293b;
+      border: 2px solid #38bdf8;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 10px;
     }
     .btn {
-      width: 60px;
-      height: 60px;
-      font-size: 24px;
-      background: #444;
+      background: #ff0055;
       color: white;
       border: none;
-      border-radius: 10px;
-      active { background: #666; }
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-weight: bold;
+      margin: 5px;
+    }
+    .btn-upgrade { background: #0284c7; }
+    .btn:active { opacity: 0.8; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      gap: 5px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .ctrl-btn {
+      width: 50px;
+      height: 50px;
+      font-size: 20px;
+      background: #334155;
+      color: white;
+      border: none;
+      border-radius: 8px;
     }
     .empty { visibility: hidden; }
+    #inventory {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #cbd5e1;
+    }
   </style>
 </head>
 <body>
 
-  <h1>🐍 스네이크 게임</h1>
-  <div id="score">점수: 0</div>
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <h1>🥚 알 훔치기: 인큐베이터 멸망전</h1>
 
-  <!-- 태블릿 터치 조작 버튼 -->
+  <div class="status">
+    💎 보석: <span id="gems">0</span>개 | 🎒 가방 알: <span id="holdingEgg">없음</span>
+  </div>
+
+  <canvas id="gameCanvas" width="400" height="250"></canvas>
+
+  <!-- 조작 버튼 -->
   <div class="controls">
     <div class="empty"></div>
-    <button class="btn" onclick="changeDir('UP')">⬆️</button>
+    <button class="ctrl-btn" onclick="move('UP')">⬆️</button>
     <div class="empty"></div>
-    <button class="btn" onclick="changeDir('LEFT')">⬅️</button>
-    <button class="btn" onclick="changeDir('DOWN')">⬇️</button>
-    <button class="btn" onclick="changeDir('RIGHT')">➡️</button>
+    <button class="ctrl-btn" onclick="move('LEFT')">⬅️</button>
+    <button class="ctrl-btn" onclick="move('DOWN')">⬇️</button>
+    <button class="ctrl-btn" onclick="move('RIGHT')">➡️</button>
   </div>
+
+  <!-- 인큐베이터 시스템 (영상의 메인 요소) -->
+  <div class="incubator-panel">
+    <h3>🔥 인큐베이터 (확률 강회)</h3>
+    <p>현재 스피릿 블룸 성공 확률: <b id="successRate">5</b>%</p>
+    <button class="btn btn-upgrade" onclick="upgradeRate()">✨ 확률 10% 증가 (보석 50개)</button>
+    <button class="btn" onclick="hatchEgg()">🚀 멸망전 알 까기!</button>
+  </div>
+
+  <div id="inventory">획득한 전설 펫: <span id="petList">없음</span></div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    const scoreElement = document.getElementById("score");
 
-    const box = 20;
-    let score = 0;
-    let d = "RIGHT";
+    let gems = 0;
+    let holding = null;
+    let successRate = 5;
+    let pets = [];
 
-    let snake = [];
-    snake[0] = { x: 9 * box, y: 10 * box };
+    const player = { x: 200, y: 200, size: 15 };
+    const myBase = { x: 170, y: 180, w: 60, h: 60 };
 
-    let food = {
-      x: Math.floor(Math.random() * 19 + 1) * box,
-      y: Math.floor(Math.random() * 19 + 1) * box
-    };
-
-    // 키보드 조작 (키보드 연결 시 가능)
-    document.addEventListener("keydown", direction);
-    function direction(event) {
-      if (event.keyCode == 37 && d != "RIGHT") d = "LEFT";
-      else if (event.keyCode == 38 && d != "DOWN") d = "UP";
-      else if (event.keyCode == 39 && d != "LEFT") d = "RIGHT";
-      else if (event.keyCode == 40 && d != "UP") d = "DOWN";
-    }
-
-    // 터치 버튼 조작
-    function changeDir(newDir) {
-      if (newDir == "LEFT" && d != "RIGHT") d = "LEFT";
-      if (newDir == "UP" && d != "DOWN") d = "UP";
-      if (newDir == "RIGHT" && d != "LEFT") d = "RIGHT";
-      if (newDir == "DOWN" && d != "UP") d = "DOWN";
-    }
+    // 맵에 젠되는 알 종류
+    let eggsOnMap = [
+      { x: 50, y: 50, name: "일반 알", color: "#ffffff", val: 10 },
+      { x: 350, y: 50, name: "희귀 화산 알", color: "#ff4500", val: 50 },
+      { x: 200, y: 40, name: "👑 영원한 알", color: "#ffd700", val: 200 }
+    ];
 
     function draw() {
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      for (let i = 0; i < snake.length; i++) {
-        ctx.fillStyle = (i == 0) ? "#00ffcc" : "#ffffff";
-        ctx.fillRect(snake[i].x, snake[i].y, box, box);
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+      // 내 기지
+      ctx.fillStyle = "#0284c7";
+      ctx.fillRect(myBase.x, myBase.y, myBase.w, myBase.h);
+      ctx.fillStyle = "white";
+      ctx.font = "12px Arial";
+      ctx.fillText("내 기지", myBase.x + 12, myBase.y + 35);
+
+      // 알 그리기
+      eggsOnMap.forEach(e => {
+        if (e.x > 0) {
+          ctx.fillStyle = e.color;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, 12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // 플레이어
+      ctx.fillStyle = "#ff0055";
+      ctx.fillRect(player.x - 10, player.y - 10, 20, 20);
+
+      checkCollisions();
+    }
+
+    function move(dir) {
+      const spd = 12;
+      if (dir === 'UP' && player.y > 15) player.y -= spd;
+      if (dir === 'DOWN' && player.y < canvas.height - 15) player.y += spd;
+      if (dir === 'LEFT' && player.x > 15) player.x -= spd;
+      if (dir === 'RIGHT' && player.x < canvas.width - 15) player.x += spd;
+      draw();
+    }
+
+    function checkCollisions() {
+      // 알 줍기
+      eggsOnMap.forEach(e => {
+        if (e.x > 0 && !holding) {
+          const dist = Math.hypot(player.x - e.x, player.y - e.y);
+          if (dist < 25) {
+            holding = e;
+            document.getElementById("holdingEgg").innerText = e.name;
+            e.x = -100; // 맵에서 숨김
+          }
+        }
+      });
+
+      // 기지로 알 가져오기
+      if (holding && player.x > myBase.x && player.x < myBase.x + myBase.w &&
+          player.y > myBase.y && player.y < myBase.y + myBase.h) {
+        gems += holding.val;
+        document.getElementById("gems").innerText = gems;
+        
+        // 3초 뒤 알 재요청
+        const respawnEgg = holding;
+        setTimeout(() => {
+          if(respawnEgg.name === "일반 알") respawnEgg.x = 50;
+          if(respawnEgg.name === "희귀 화산 알") respawnEgg.x = 350;
+          if(respawnEgg.name === "👑 영원한 알") respawnEgg.x = 200;
+          draw();
+        }, 4000);
+
+        holding = null;
+        document.getElementById("holdingEgg").innerText = "인큐베이터 장전 완료!";
       }
+    }
 
-      ctx.fillStyle = "red";
-      ctx.fillRect(food.x, food.y, box, box);
-
-      let snakeX = snake[0].x;
-      let snakeY = snake[0].y;
-
-      if (d == "LEFT") snakeX -= box;
-      if (d == "UP") snakeY -= box;
-      if (d == "RIGHT") snakeX += box;
-      if (d == "DOWN") snakeY += box;
-
-      if (snakeX == food.x && snakeY == food.y) {
-        score++;
-        scoreElement.innerText = "점수: " + score;
-        food = {
-          x: Math.floor(Math.random() * 19 + 1) * box,
-          y: Math.floor(Math.random() * 19 + 1) * box
-        };
+    function upgradeRate() {
+      if (gems >= 50 && successRate < 85) {
+        gems -= 50;
+        successRate += 10;
+        document.getElementById("gems").innerText = gems;
+        document.getElementById("successRate").innerText = successRate;
+      } else if (successRate >= 85) {
+        alert("최대 확률 달성!");
       } else {
-        snake.pop();
+        alert("보석이 부족합니다!");
       }
-
-      let newHead = { x: snakeX, y: snakeY };
-
-      // 충돌 검사 (벽 또는 자신과 충돌)
-      if (snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
-        clearInterval(game);
-        alert("게임 오버! 최종 점수: " + score);
-        location.reload();
-      }
-
-      snake.unshift(newHead);
     }
 
-    function collision(head, array) {
-      for (let i = 0; i < array.length; i++) {
-        if (head.x == array[i].x && head.y == array[i].y) return true;
+    function hatchEgg() {
+      const rand = Math.random() * 100;
+      if (rand < successRate) {
+        alert("🔥 대성공! [스피릿 블룸 드래곤 🐉] 획득!");
+        pets.push("스피릿 블룸 🐉");
+      } else {
+        alert("😭 실패... [일반 블루 타이거 🐯] 획득");
+        pets.push("일반 타이거 🐯");
       }
-      return false;
+      document.getElementById("petList").innerText = pets.join(", ");
+      // 확률 초기화
+      successRate = 5;
+      document.getElementById("successRate").innerText = successRate;
     }
 
-    let game = setInterval(draw, 120);
+    draw();
   </script>
 </body>
 </html>
