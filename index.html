@@ -13,7 +13,6 @@
       font-family: monospace, sans-serif;
     }
 
-    /* 알 아이콘 메인 버튼 */
     .egg-btn {
       display: inline-flex;
       justify-content: center;
@@ -28,12 +27,6 @@
       font-size: 24px;
     }
 
-    .egg-btn:active {
-      transform: scale(0.95);
-      background-color: #f1f5f9;
-    }
-
-    /* 모달 팝업 */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -57,50 +50,51 @@
       overflow: hidden;
     }
 
-    /* 수직 필드 */
+    /* 가로 폭을 적당하게 줄인 월드 (600px) */
     .world {
       position: absolute;
-      width: 1200px;
+      width: 600px;
       height: 2500px;
       bottom: 0;
-      left: -400px;
+      left: 0;
       background: linear-gradient(
         to top,
-        #86efac 0px, #86efac 500px,       /* 1: 연두 */
-        #22c55e 500px, #22c55e 1000px,   /* 2: 초록 */
-        #3b82f6 1000px, #3b82f6 1500px,  /* 3: 파랑 */
-        #a855f7 1500px, #a855f7 2000px,  /* 4: 보라 */
-        #ffedd5 2000px, #ffedd5 2500px   /* 5: 살구 */
+        #86efac 0px, #86efac 500px,
+        #22c55e 500px, #22c55e 1000px,
+        #3b82f6 1000px, #3b82f6 1500px,
+        #a855f7 1500px, #a855f7 2000px,
+        #ffedd5 2000px, #ffedd5 2500px
       );
     }
 
-    /* 뒤쪽 울타리 (1구역 울타리 안쪽 영역 표시) */
-    .fence-zone {
-      position: absolute;
-      bottom: 0;
-      left: 100px;
-      width: 1000px;
-      height: 250px;
-      border: 6px dashed #a16207;
-      background-color: rgba(254, 240, 138, 0.2);
-    }
-
-    /* 외곽 테두리 이동 제한 벽 시각화 */
+    /* 실시간 좌우상하 제한 벽 테두리 */
     .world-walls {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      border: 12px solid #0f172a;
+      border: 8px solid #0f172a;
       pointer-events: none;
+      z-index: 4;
     }
 
-    /* 러닝머신 (캐릭터 접근 가능 위치로 조정) */
+    /* 울타리 영역 (보관소) */
+    .fence-zone {
+      position: absolute;
+      bottom: 10px;
+      left: 50px;
+      width: 500px;
+      height: 200px;
+      border: 4px dashed #a16207;
+      background-color: rgba(254, 240, 138, 0.25);
+    }
+
+    /* 러닝머신 위치 및 디자인 */
     .treadmill {
       position: absolute;
       bottom: 50px;
-      left: 580px;
+      left: 265px;
       width: 70px;
       height: 90px;
       background-color: #334155;
@@ -115,49 +109,40 @@
       z-index: 2;
     }
 
-    .treadmill-screen {
-      width: 70%;
-      height: 12px;
-      background-color: #38bdf8;
-      border-radius: 3px;
-    }
-
+    .treadmill-screen { width: 70%; height: 12px; background-color: #38bdf8; border-radius: 3px; }
     .treadmill-belt {
       width: 100%;
       height: 55px;
-      background: repeating-linear-gradient(
-        0deg, #0f172a, #0f172a 8px, #475569 8px, #475569 12px
-      );
+      background: repeating-linear-gradient(0deg, #0f172a, #0f172a 8px, #475569 8px, #475569 12px);
       border-radius: 4px;
     }
 
-    /* 필드에 떨어져 있는 알 오라 */
     .field-egg {
       position: absolute;
       font-size: 24px;
       z-index: 3;
+      transform: translate(-50%, 50%);
     }
 
-    /* 보관소에 정리된 알 오라 및 부화 상태 타이머 */
     .held-egg {
       position: absolute;
       display: flex;
       flex-direction: column;
       align-items: center;
       z-index: 3;
+      transform: translate(-50%, 50%);
     }
 
     .egg-timer {
       font-size: 11px;
       font-weight: bold;
-      color: #000000;
-      background-color: rgba(255, 255, 255, 0.8);
+      color: #000;
+      background-color: rgba(255, 255, 255, 0.85);
       padding: 1px 4px;
       border-radius: 4px;
       margin-bottom: -2px;
     }
 
-    /* 왼쪽 위 닫기 버튼 */
     .close-btn {
       position: absolute;
       top: 15px;
@@ -177,12 +162,6 @@
       z-index: 10;
     }
 
-    .close-btn:active {
-      transform: scale(0.92);
-      background-color: #dc2626;
-    }
-
-    /* 왼쪽 아래 스탯 UI */
     .stats-ui {
       position: absolute;
       bottom: 20px;
@@ -196,16 +175,29 @@
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
     }
 
-    .stat-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
+    .stat-row { display: flex; align-items: center; gap: 6px; }
     .stat-s { color: #3b82f6; }
     .stat-m { color: #22c55e; }
 
-    /* 알 부화 알림 상단 팝업 버튼 */
+    /* 우측 하단 알 줍기/놓기 액션 버튼 */
+    .pickup-btn {
+      display: none;
+      position: absolute;
+      bottom: 140px;
+      right: 35px;
+      width: 80px;
+      height: 45px;
+      background-color: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 10;
+    }
+
     .hatch-alert-btn {
       display: none;
       position: absolute;
@@ -224,7 +216,7 @@
       z-index: 10;
     }
 
-    /* 중앙 캐릭터 */
+    /* 캐릭터 및 들고 있는 알 오버레이 모션 */
     .character {
       position: absolute;
       top: 50%;
@@ -239,7 +231,22 @@
       z-index: 5;
     }
 
-    /* 조이스틱 UI */
+    /* 알 들기 모션 (캐릭터 머리 위에 표시) */
+    .carrying-egg {
+      display: none;
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      animation: carryBounce 0.6s infinite alternate ease-in-out;
+    }
+
+    @keyframes carryBounce {
+      0% { transform: translate(-50%, 0px); }
+      100% { transform: translate(-50%, -6px); }
+    }
+
     .joystick-base {
       position: absolute;
       bottom: 25px;
@@ -267,19 +274,14 @@
 </head>
 <body>
 
-  <!-- 알 아이콘 메인 버튼 -->
   <button class="egg-btn" id="openModal">🥚</button>
 
-  <!-- 게임 메인 창 -->
   <div class="modal-overlay" id="modal">
     <div class="modal-content" id="modalContent">
-      <!-- 닫기 버튼 -->
       <button class="close-btn" id="closeModal">✕</button>
-
-      <!-- 부화 가능 알림 토스트 버튼 -->
       <button class="hatch-alert-btn" id="hatchAlertBtn">알 부화!</button>
+      <button class="pickup-btn" id="pickupBtn">알 줍기</button>
 
-      <!-- 왼쪽 아래 스탯 UI (고정된 M:000 표현) -->
       <div class="stats-ui">
         <div class="stat-row">
           <span style="color: #38bdf8; font-size: 20px;">👟</span>
@@ -291,25 +293,21 @@
         </div>
       </div>
 
-      <!-- 월드 및 구역 바운더리 -->
       <div class="world" id="world">
-        <!-- 뒤쪽 울타리 영역 (1구역 보관소) -->
         <div class="fence-zone"></div>
-        <!-- 울타리 안쪽 접근하기 쉬운 위치의 러닝머신 -->
-        <div class="treadmill">
+        <div class="treadmill" id="treadmill">
           <div class="treadmill-screen"></div>
           <div class="treadmill-belt"></div>
         </div>
-        <!-- 외곽 이동 불가 벽 구조선 -->
         <div class="world-walls"></div>
-        <!-- 알들이 동적으로 생성될 컨테이너 공간 -->
         <div id="eggContainer"></div>
       </div>
 
-      <!-- 고정 플레이어 캐릭터 -->
-      <div class="character"></div>
+      <!-- 캐릭터 및 들기 애니메이션 구조 -->
+      <div class="character">
+        <div class="carrying-egg" id="carryingEgg">🥚</div>
+      </div>
 
-      <!-- 조이스틱 컨트롤러 -->
       <div class="joystick-base" id="joyBase">
         <div class="joystick-stick" id="joyStick"></div>
       </div>
@@ -325,39 +323,38 @@
     const mText = document.getElementById('mText');
     const sText = document.getElementById('sText');
     const hatchAlertBtn = document.getElementById('hatchAlertBtn');
+    const pickupBtn = document.getElementById('pickupBtn');
+    const carryingEgg = document.getElementById('carryingEgg');
 
     openBtn.addEventListener('click', () => modal.style.display = 'flex');
     closeBtn.addEventListener('click', () => modal.style.display = 'none');
 
-    // 조이스틱 상태
     const joyBase = document.getElementById('joyBase');
     const joyStick = document.getElementById('joyStick');
     let isDragging = false;
     const maxRadius = 32;
 
-    // 위치 좌표계 및 물리 변수
-    let posX = 600; // 초기 위치 x
-    let posY = 100; // 초기 위치 y
+    // 위치 좌표 (가로폭 600px 중앙 상차림)
+    let posX = 300;
+    let posY = 90;
     let moveX = 0;
     let moveY = 0;
     let speed = 10.0;
-    let money = 0; // 고정 및 보유 머니 수치
+    let money = 0;
 
-    // 알 데이터 및 타이머 관리
     let fieldEggs = [];
     let savedEggs = [];
+    let isCarrying = false;
+    let nearbyEggIndex = -1;
     let resetTimer = 30;
 
-    // 초기 필드 알 스폰
     function spawnFieldEggs() {
-      // 기존 필드 알 소멸
       fieldEggs.forEach(e => e.el.remove());
       fieldEggs = [];
 
-      // 필드 상에 랜덤 5개의 알 생성
       for (let i = 0; i < 5; i++) {
-        const x = Math.random() * 1000 + 100;
-        const y = Math.random() * 2000 + 350; // 울타리 외부 필드
+        const x = Math.random() * 500 + 50;
+        const y = Math.random() * 1900 + 300;
         
         const el = document.createElement('div');
         el.className = 'field-egg';
@@ -372,7 +369,6 @@
 
     spawnFieldEggs();
 
-    // 30초마다 울타리 외부 필드 알 전체 리셋
     setInterval(() => {
       resetTimer--;
       if (resetTimer <= 0) {
@@ -414,13 +410,46 @@
       moveY = (deltaY / maxRadius) * speedFactor;
     }
 
-    // 울타리 내부 가지런한 알 정렬 위치 계산
+    // 알 줍기 및 울타리 내 내려놓기
+    pickupBtn.addEventListener('click', () => {
+      if (!isCarrying && nearbyEggIndex !== -1) {
+        // 알 줍기
+        const e = fieldEggs[nearbyEggIndex];
+        e.el.remove();
+        fieldEggs.splice(nearbyEggIndex, 1);
+        isCarrying = true;
+        carryingEgg.style.display = 'block';
+        pickupBtn.style.display = 'none';
+      } else if (isCarrying) {
+        // 울타리 안쪽에 들어왔을 때만 내려놓을 수 있음
+        const inFence = posX >= 50 && posX <= 550 && posY >= 10 && posY <= 210;
+        if (inFence) {
+          isCarrying = false;
+          carryingEgg.style.display = 'none';
+
+          const heldEl = document.createElement('div');
+          heldEl.className = 'held-egg';
+          heldEl.innerHTML = `<span class="egg-timer">10s</span><span>🥚</span>`;
+          eggContainer.appendChild(heldEl);
+
+          savedEggs.push({
+            el: heldEl,
+            timerEl: heldEl.querySelector('.egg-timer'),
+            timeLeft: 10,
+            readyToHatch: false
+          });
+
+          arrangeSavedEggs();
+        }
+      }
+    });
+
     function arrangeSavedEggs() {
       savedEggs.forEach((egg, idx) => {
         const row = Math.floor(idx / 5);
         const col = idx % 5;
-        const x = 150 + col * 50;
-        const y = 50 + row * 60;
+        const x = 90 + col * 90;
+        const y = 40 + row * 50;
 
         egg.el.style.left = `${x}px`;
         egg.el.style.bottom = `${y}px`;
@@ -433,53 +462,50 @@
       if (modal.style.display === 'flex') {
         const delta = (now - lastTime) / 1000;
 
-        // 월드 벽 경계 제한 (나갈 수 없는 벽 처리)
         posX += moveX;
         posY -= moveY;
 
-        if (posX < 30) posX = 30;
-        if (posX > 1170) posX = 1170;
-        if (posY < 30) posY = 30;
-        if (posY > 2470) posY = 2470;
+        // 좌우상하 완전한 실시간 충돌 벽 (월드 폭 600px, 높이 2500px 범위 제한)
+        if (posX < 25) posX = 25;
+        if (posX > 575) posX = 575;
+        if (posY < 25) posY = 25;
+        if (posY > 2475) posY = 2475;
 
-        // 카메라 이동 트랜스폼
         const bounds = modal.querySelector('.modal-content').getBoundingClientRect();
         const viewOffsetX = posX - bounds.width / 2;
         const viewOffsetY = posY - bounds.height / 2;
 
         world.style.transform = `translate(${-viewOffsetX}px, ${viewOffsetY}px)`;
 
-        // 러닝머신 터치 감지 (초당 0.5 속도 상승)
-        if (Math.abs(posX - 615) < 35 && Math.abs(posY - 95) < 45) {
+        // 정교해진 러닝머신 영역 감지 (X: 265~335, Y: 50~140)
+        if (posX >= 265 && posX <= 335 && posY >= 50 && posY <= 140) {
           speed += 0.5 * delta;
         }
 
-        // 필드 알 습득 체크 및 울타리 내 정렬 배치
-        for (let i = fieldEggs.length - 1; i >= 0; i--) {
-          const e = fieldEggs[i];
-          if (Math.hypot(posX - e.x, posY - e.y) < 35) {
-            e.el.remove();
-            fieldEggs.splice(i, 1);
-
-            // 습득한 알 구조 요소 바인딩
-            const heldEl = document.createElement('div');
-            heldEl.className = 'held-egg';
-            heldEl.innerHTML = `<span class="egg-timer">10s</span><span>🥚</span>`;
-            eggContainer.appendChild(heldEl);
-
-            savedEggs.push({
-              el: heldEl,
-              timerEl: heldEl.querySelector('.egg-timer'),
-              iconEl: heldEl.querySelectorAll('span')[1],
-              timeLeft: 10,
-              readyToHatch: false
-            });
-
-            arrangeSavedEggs();
+        // 근처 알 체크 및 줍기 버튼 활성화
+        nearbyEggIndex = -1;
+        if (!isCarrying) {
+          for (let i = 0; i < fieldEggs.length; i++) {
+            if (Math.hypot(posX - fieldEggs[i].x, posY - fieldEggs[i].y) < 40) {
+              nearbyEggIndex = i;
+              break;
+            }
           }
         }
 
-        // 보관 알 타이머 및 부화 감지 처리
+        // 버튼 상/하차 상태 제어
+        const inFence = posX >= 50 && posX <= 550 && posY >= 10 && posY <= 210;
+        if (!isCarrying && nearbyEggIndex !== -1) {
+          pickupBtn.innerText = "알 줍기";
+          pickupBtn.style.display = "block";
+        } else if (isCarrying && inFence) {
+          pickupBtn.innerText = "내려놓기";
+          pickupBtn.style.display = "block";
+        } else if (!isCarrying) {
+          pickupBtn.style.display = "none";
+        }
+
+        // 울타리 안쪽에 놓인 알만 타이머 감소 (초 카운트다운 진행)
         let hasHatchableEgg = false;
         savedEggs.forEach(egg => {
           if (!egg.readyToHatch) {
@@ -499,10 +525,8 @@
           }
         });
 
-        // 조건부 부화 팝업 알림 토출
         hatchAlertBtn.style.display = hasHatchableEgg ? 'block' : 'none';
 
-        // 스탯 표시 갱신
         sText.innerText = `S:${speed.toFixed(1)}`;
         mText.innerText = `M:${String(money).padStart(3, '0')}`;
       }
@@ -510,19 +534,17 @@
       requestAnimationFrame(updateGame);
     }
 
-    // 알 부화 버튼 터치 시 처리
     hatchAlertBtn.addEventListener('click', () => {
       for (let i = savedEggs.length - 1; i >= 0; i--) {
         if (savedEggs[i].readyToHatch) {
           savedEggs[i].el.remove();
           savedEggs.splice(i, 1);
-          money += 50; // 부화 성공 보상
+          money += 50;
         }
       }
       arrangeSavedEggs();
     });
 
-    // 조이스틱 이벤트 바인딩
     joyBase.addEventListener('mousedown', handleStart);
     window.addEventListener('mouseup', handleEnd);
     window.addEventListener('mousemove', handleMove);
