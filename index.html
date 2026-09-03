@@ -2,572 +2,374 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>계란을 훔치다!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>웹사이트</title>
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    
     body {
-      background-color: #020617;
-      color: white;
-      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
+      background-color: #ffffff;
+      padding: 20px;
+      font-family: monospace, sans-serif;
+    }
+
+    /* 알 아이콘 버튼 */
+    .egg-btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 50px;
+      height: 50px;
+      background-color: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      font-size: 24px;
+    }
+
+    .egg-btn:active {
+      transform: scale(0.95);
+      background-color: #f1f5f9;
+    }
+
+    /* 모달 배경 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    /* 팝업 창 (뷰포트) */
+    .modal-content {
+      position: relative;
+      width: 85vw;
+      height: 80vh;
+      background-color: #86efac;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
       overflow: hidden;
+    }
+
+    /* 월드 맵 */
+    .world {
+      position: absolute;
+      width: 2000px;
+      height: 2500px;
+      bottom: 0;
+      left: -800px;
+      background: linear-gradient(
+        to top,
+        #86efac 0px, #86efac 500px,       /* 1구역: 연두 */
+        #22c55e 500px, #22c55e 1000px,   /* 2구역: 초록 */
+        #3b82f6 1000px, #3b82f6 1500px,  /* 3구역: 파랑 */
+        #a855f7 1500px, #a855f7 2000px,  /* 4구역: 보라 */
+        #ffedd5 2000px, #ffedd5 2500px   /* 5구역: 살구 */
+      );
+    }
+
+    /* 울타리 */
+    .fence {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 40px,
+        rgba(0, 0, 0, 0.12) 40px,
+        rgba(0, 0, 0, 0.12) 46px
+      );
+    }
+
+    /* 울타리 위쪽에 위치한 러닝머신 오브젝트 */
+    .treadmill {
+      position: absolute;
+      bottom: 120px; /* 울타리 위쪽 연두 구역에 설치 */
+      left: 960px;   /* 시작 중앙 근처 */
+      width: 80px;
+      height: 100px;
+      background-color: #334155;
+      border: 3px solid #0f172a;
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      height: 100vh;
-      touch-action: manipulation;
-      user-select: none;
-    }
-
-    /* 상단 헤더 & 정보바 */
-    .header {
-      width: 100%;
-      background: #0f172a;
-      padding: 8px 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-      z-index: 10;
-    }
-    h1 {
-      font-size: 16px;
-      margin: 0 0 6px 0;
-      color: #fbbf24;
-    }
-    .status-bar {
-      display: flex;
-      justify-content: space-around;
-      background: #1e293b;
       padding: 6px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: bold;
-      border: 1px solid #334155;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
     }
 
-    /* 캔버스 영역 */
-    #canvasWrapper {
-      position: relative;
+    .treadmill-belt {
       width: 100%;
-      flex: 1;
+      height: 60px;
+      background: repeating-linear-gradient(
+        0deg,
+        #1e293b,
+        #1e293b 10px,
+        #475569 10px,
+        #475569 14px
+      );
+      border-radius: 6px;
+    }
+
+    .treadmill-screen {
+      width: 60%;
+      height: 14px;
+      background-color: #38bdf8;
+      border-radius: 4px;
+      font-size: 10px;
+      text-align: center;
+      line-height: 14px;
+    }
+
+    /* 왼쪽 위 빨간색 X 버튼 */
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      width: 36px;
+      height: 36px;
+      background-color: #ef4444;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
       display: flex;
       justify-content: center;
       align-items: center;
-      background: #020617;
-      padding: 4px 0;
-    }
-    canvas {
-      background: #000000;
-      border: 3px solid #334155;
-      border-radius: 12px;
-      aspect-ratio: 360 / 520;
-      max-width: 95vw;
-      max-height: 50vh;
-      object-fit: contain;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+      z-index: 10;
     }
 
-    /* 화면 상단 알림 메시지 텍스트 */
-    #notificationText {
+    .close-btn:active {
+      transform: scale(0.92);
+      background-color: #dc2626;
+    }
+
+    /* 왼쪽 아래 스탯 UI (돈/신발 아이콘) */
+    .stats-ui {
       position: absolute;
-      top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #ffffff;
-      font-size: 15px;
-      font-weight: bold;
-      background: rgba(15, 23, 42, 0.85);
-      padding: 6px 16px;
-      border-radius: 20px;
-      border: 1px solid #64748b;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 30;
-      white-space: nowrap;
-    }
-
-    /* 하단 조작 영역 */
-    .controls-container {
-      width: 100%;
-      padding: 14px 20px 60px 20px;
-      background: #0f172a;
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 -6px 20px rgba(0,0,0,0.6);
-      z-index: 20;
-    }
-
-    /* 조이스틱 */
-    #joystickZone {
-      width: 100px;
-      height: 100px;
-      background: rgba(30, 58, 138, 0.4);
-      border: 2px solid #3b82f6;
-      border-radius: 50%;
-      position: relative;
-      touch-action: none;
-    }
-    #joystickKnob {
-      width: 42px;
-      height: 42px;
-      background: #60a5fa;
-      border: 2px solid #ffffff;
-      border-radius: 50%;
-      position: absolute;
-      top: 27px;
-      left: 27px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    }
-
-    /* 액션 버튼 그룹 */
-    .btn-group {
+      bottom: 20px;
+      left: 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      width: 52%;
-    }
-    .btn {
-      color: white;
-      border: none;
-      padding: 12px 14px;
-      border-radius: 12px;
+      gap: 6px;
+      z-index: 10;
       font-weight: bold;
-      font-size: 14px;
-      width: 100%;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
-    }
-    .btn:active { transform: scale(0.95); opacity: 0.9; }
-
-    .btn-treadmill { background: #059669; }
-    .btn-pickup { 
-      background: #2563eb; 
-      animation: pulse 1s infinite alternate; 
-    }
-    .btn-hatch { 
-      background: #d97706; 
-      animation: pulse 1s infinite alternate; 
+      font-size: 18px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
     }
 
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.03); }
+    .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-s { color: #3b82f6; } /* 파란색 S:(속도) */
+    .stat-m { color: #22c55e; } /* 초록색 M:000 */
+
+    /* 화면 중앙 고정 캐릭터 */
+    .character {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 36px;
+      height: 36px;
+      background-color: #3b82f6;
+      border: 3px solid #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transform: translate(-50%, -50%);
+      z-index: 5;
+    }
+
+    /* 오른쪽 아래 조이스틱 */
+    .joystick-base {
+      position: absolute;
+      bottom: 25px;
+      right: 25px;
+      width: 100px;
+      height: 100px;
+      background-color: rgba(0, 0, 0, 0.12);
+      border: 2px solid rgba(0, 0, 0, 0.2);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      touch-action: none;
+      z-index: 10;
+    }
+
+    .joystick-stick {
+      width: 45px;
+      height: 45px;
+      background-color: rgba(0, 0, 0, 0.35);
+      border-radius: 50%;
+      position: absolute;
     }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>🥚 계란을 훔치다!</h1>
-    <div class="status-bar">
-      <div>⚡ 속도: <span id="speedVal">5</span></div>
-      <div>🎒 들기: <span id="holdingVal">없음</span></div>
-      <div>🔄 리셋: <span id="resetTimer">30</span>s</div>
-    </div>
-  </div>
+  <!-- 알 아이콘 버튼 -->
+  <button class="egg-btn" id="openModal">🥚</button>
 
-  <div id="canvasWrapper">
-    <div id="notificationText">알을 훔쳐왔습니다!</div>
-    <canvas id="gameCanvas" width="360" height="520"></canvas>
-  </div>
+  <!-- 버튼 클릭 시 열리는 창 -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content" id="modalContent">
+      <!-- 왼쪽 위 빨간색 X 버튼 -->
+      <button class="close-btn" id="closeModal">✕</button>
 
-  <div class="controls-container">
-    <div id="joystickZone">
-      <div id="joystickKnob"></div>
-    </div>
+      <!-- 왼쪽 아래 스탯 UI -->
+      <div class="stats-ui">
+        <!-- 위쪽: 하늘색 신발 아이콘 + 파란색 속도 텍스트 -->
+        <div class="stat-row">
+          <span style="font-size:20px;">👟</span>
+          <span class="stat-s" id="sText">S:10.0</span>
+        </div>
+        <!-- 아래쪽: 돈 아이콘 + 초록색 M:000 텍스트 -->
+        <div class="stat-row">
+          <span style="font-size:20px;">💵</span>
+          <span class="stat-m" id="mText">M:000</span>
+        </div>
+      </div>
 
-    <div class="btn-group">
-      <button class="btn btn-treadmill" onclick="runTreadmill()">🏃 런닝머신 (+2)</button>
-      <button id="pickupBtn" class="btn btn-pickup" style="display: none;" onclick="pickUpEgg()">🖐️ 알 줍기!</button>
-      <button id="hatchBtn" class="btn btn-hatch" style="display: none;" onclick="hatchNearbyEgg()">🐣 알 부화하기!</button>
+      <!-- 위쪽 수직 구조 월드 맵 -->
+      <div class="world" id="world">
+        <div class="fence"></div>
+        <!-- 울타리 위쪽에 위치한 러닝머신 -->
+        <div class="treadmill" id="treadmill">
+          <div class="treadmill-screen">RUN</div>
+          <div class="treadmill-belt"></div>
+        </div>
+      </div>
+
+      <!-- 중앙 고정 캐릭터 -->
+      <div class="character"></div>
+
+      <!-- 오른쪽 아래 조이스틱 -->
+      <div class="joystick-base" id="joyBase">
+        <div class="joystick-stick" id="joyStick"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    const openBtn = document.getElementById('openModal');
+    const closeBtn = document.getElementById('closeModal');
+    const modal = document.getElementById('modal');
+    const world = document.getElementById('world');
+    const mText = document.getElementById('mText');
+    const sText = document.getElementById('sText');
+    const treadmill = document.getElementById('treadmill');
 
-    let baseSpeed = 5;
-    let holding = null;
+    openBtn.addEventListener('click', () => modal.style.display = 'flex');
+    closeBtn.addEventListener('click', () => modal.style.display = 'none');
 
-    // 플레이어
-    const playerWorld = { x: 100, y: 260, size: 24 };
-
-    // 내 기지
-    const myBaseWorld = { x: -50, y: 50, w: 220, h: 420 };
-
-    const baseInstalledEggs = [];
-    let fieldEggs = [];
-
-    let lastResetTime = Date.now();
-    const RESET_INTERVAL = 30000;
-
-    // 맵 경계
-    const MAP_LIMIT = {
-      minY: 40,
-      maxY: 480,
-      minX: -50,
-      maxX: 3850
-    };
-
-    // 구역 설정
-    const ZONES = [
-      { name: "안전 구역", minX: -50, maxX: 500, bgColor: "#15803d" },
-      { name: "기본 알 구역", minX: 500, maxX: 1300, bgColor: "#1e3a8a", eggType: { name: "기본 알", reqSpeed: 5, color: "#ffffff", pattern: "#cbd5e1", hatchTime: 5, bonus: 3 } },
-      { name: "정글 구역", minX: 1300, maxX: 2160, bgColor: "#064e3b", eggType: { name: "정글 전갈 알 🦂", reqSpeed: 9, color: "#10b981", pattern: "#065f46", hatchTime: 10, bonus: 5 } },
-      { name: "코스믹 구역", minX: 2160, maxX: 3000, bgColor: "#4c1d95", eggType: { name: "코스믹 알 🌌", reqSpeed: 15, color: "#a855f7", pattern: "#581c87", hatchTime: 18, bonus: 8 } },
-      { name: "피닉스 구역", minX: 3000, maxX: 3850, bgColor: "#7f1d1d", eggType: { name: "🔥 피닉스 알", reqSpeed: 23, color: "#ef4444", pattern: "#7f1d1d", hatchTime: 30, bonus: 15 } }
-    ];
-
-    let moveInput = { x: 0, y: 0 };
-    let eggToPickUp = null;
-    let nearbyEggToHatch = null;
-    let notifTimeout = null;
-
-    function showNotification(msg) {
-      const el = document.getElementById("notificationText");
-      if (!el) return;
-      el.innerText = msg;
-      el.style.opacity = "1";
-
-      if (notifTimeout) clearTimeout(notifTimeout);
-      notifTimeout = setTimeout(() => {
-        el.style.opacity = "0";
-      }, 2000);
-    }
-
-    function spawnFieldEggs() {
-      fieldEggs = [];
-      ZONES.forEach(zone => {
-        if (!zone.eggType) return;
-        const count = Math.floor(Math.random() * 3) + 3;
-        for (let i = 0; i < count; i++) {
-          const rx = zone.minX + Math.random() * (zone.maxX - zone.minX - 120) + 60;
-          const ry = MAP_LIMIT.minY + 30 + Math.random() * (MAP_LIMIT.maxY - MAP_LIMIT.minY - 60);
-          fieldEggs.push({
-            x: rx,
-            y: ry,
-            ...zone.eggType
-          });
-        }
-      });
-      lastResetTime = Date.now();
-    }
-
-    function drawRoundRect(x, y, width, height, radius, color) {
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.arcTo(x + width, y, x + width, y + height, radius);
-      ctx.arcTo(x + width, y + height, x, y + height, radius);
-      ctx.arcTo(x, y + height, x, y, radius);
-      ctx.arcTo(x, y, x + width, y, radius);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-
-    function drawEgg(x, y, mainColor, patternColor, scale = 1) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(scale, scale);
-
-      ctx.fillStyle = mainColor;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 12, 16, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.fillStyle = patternColor;
-      ctx.beginPath();
-      ctx.arc(-3, -4, 2.5, 0, Math.PI * 2);
-      ctx.arc(4, 2, 3, 0, Math.PI * 2);
-      ctx.arc(-2, 6, 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    function drawMapWalls(cameraX, cameraY) {
-      ctx.fillStyle = "#1e293b";
-      ctx.strokeStyle = "#475569";
-      ctx.lineWidth = 3;
-
-      const wallThick = 30;
-      const leftX = MAP_LIMIT.minX - wallThick - cameraX;
-      const rightX = MAP_LIMIT.maxX - cameraX;
-      const topY = MAP_LIMIT.minY - wallThick - cameraY;
-      const bottomY = MAP_LIMIT.maxY - cameraY;
-      const mapWidth = MAP_LIMIT.maxX - MAP_LIMIT.minX + wallThick * 2;
-
-      ctx.fillRect(leftX, topY, mapWidth, wallThick);
-      ctx.strokeRect(leftX, topY, mapWidth, wallThick);
-
-      ctx.fillRect(leftX, bottomY, mapWidth, wallThick);
-      ctx.strokeRect(leftX, bottomY, mapWidth, wallThick);
-
-      ctx.fillRect(leftX, topY, wallThick, MAP_LIMIT.maxY - MAP_LIMIT.minY + wallThick * 2);
-      ctx.strokeRect(leftX, topY, wallThick, MAP_LIMIT.maxY - MAP_LIMIT.minY + wallThick * 2);
-
-      ctx.fillRect(rightX, topY, wallThick, MAP_LIMIT.maxY - MAP_LIMIT.minY + wallThick * 2);
-      ctx.strokeRect(rightX, topY, wallThick, MAP_LIMIT.maxY - MAP_LIMIT.minY + wallThick * 2);
-    }
-
-    function update() {
-      // 속도 계산 (초록 구역: x <= 500 내에서는 5 고정)
-      let activeSpeed = baseSpeed;
-      if (playerWorld.x <= 500) {
-        activeSpeed = 5;
-        document.getElementById("speedVal").innerText = "5 (고정)";
-      } else {
-        document.getElementById("speedVal").innerText = baseSpeed;
-      }
-
-      // 플레이어 이동 처리
-      playerWorld.x += moveInput.x * activeSpeed * 0.7;
-      playerWorld.y += moveInput.y * activeSpeed * 0.7;
-
-      if (playerWorld.x < MAP_LIMIT.minX + 15) playerWorld.x = MAP_LIMIT.minX + 15;
-      if (playerWorld.x > MAP_LIMIT.maxX - 15) playerWorld.x = MAP_LIMIT.maxX - 15;
-      if (playerWorld.y < MAP_LIMIT.minY + 15) playerWorld.y = MAP_LIMIT.minY + 15;
-      if (playerWorld.y > MAP_LIMIT.maxY - 15) playerWorld.y = MAP_LIMIT.maxY - 15;
-
-      const cameraX = playerWorld.x - 180;
-      const cameraY = playerWorld.y - 260;
-
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const elapsed = Date.now() - lastResetTime;
-      const remainResetSec = Math.max(0, Math.ceil((RESET_INTERVAL - elapsed) / 1000));
-      document.getElementById("resetTimer").innerText = remainResetSec;
-      if (elapsed >= RESET_INTERVAL) {
-        spawnFieldEggs();
-      }
-
-      // 타일 구역 그리기
-      ZONES.forEach(zone => {
-        const zSX = zone.minX - cameraX;
-        const zWidth = zone.maxX - zone.minX;
-        ctx.fillStyle = zone.bgColor;
-        ctx.fillRect(zSX, 0, zWidth, canvas.height);
-      });
-
-      // x = 500 위치에 얇은 빨간 경계선
-      const redLineSX = 500 - cameraX;
-      ctx.strokeStyle = "#ef4444";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(redLineSX, MAP_LIMIT.minY - cameraY);
-      ctx.lineTo(redLineSX, MAP_LIMIT.maxY - cameraY);
-      ctx.stroke();
-
-      drawMapWalls(cameraX, cameraY);
-
-      // 기지 그리기
-      const baseSX = myBaseWorld.x - cameraX;
-      const baseSY = myBaseWorld.y - cameraY;
-      ctx.fillStyle = "#854d0e";
-      ctx.fillRect(baseSX, baseSY, myBaseWorld.w, myBaseWorld.h);
-      ctx.strokeStyle = "#fef08a";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(baseSX, baseSY, myBaseWorld.w, myBaseWorld.h);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 13px Arial";
-      ctx.fillText("내 기지 🏡", baseSX + 75, baseSY + 25);
-
-      const now = Date.now();
-      nearbyEggToHatch = null;
-
-      // 기지 내부 알 처리
-      baseInstalledEggs.forEach(egg => {
-        const eggSX = egg.x - cameraX;
-        const eggSY = egg.y - cameraY;
-
-        drawEgg(eggSX, eggSY, egg.color, egg.pattern, 0.85);
-
-        const remainSec = Math.max(0, Math.ceil((egg.hatchEndTime - now) / 1000));
-
-        if (remainSec > 0) {
-          ctx.fillStyle = "#fde047";
-          ctx.font = "bold 11px Arial";
-          ctx.fillText(`${remainSec}초`, eggSX - 8, eggSY - 14);
-        } else {
-          ctx.fillStyle = "#ef4444";
-          ctx.font = "bold 18px Arial";
-          ctx.fillText("!", eggSX - 3, eggSY - 14);
-
-          const dist = Math.hypot(playerWorld.x - egg.x, playerWorld.y - egg.y);
-          if (dist < 35) {
-            nearbyEggToHatch = egg;
-          }
-        }
-      });
-
-      // 필드 알 처리
-      eggToPickUp = null;
-      fieldEggs.forEach(e => {
-        const eggSX = e.x - cameraX;
-        const eggSY = e.y - cameraY;
-
-        drawEgg(eggSX, eggSY, e.color, e.pattern);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 10px Arial";
-        ctx.fillText(`${e.name}`, eggSX - 20, eggSY + 22);
-        ctx.fillText(`(속도 ${e.reqSpeed})`, eggSX - 15, eggSY + 34);
-
-        if (!holding) {
-          const dist = Math.hypot(playerWorld.x - e.x, playerWorld.y - e.y);
-          if (dist < 32) {
-            eggToPickUp = e;
-          }
-        }
-      });
-
-      document.getElementById("pickupBtn").style.display = eggToPickUp ? "block" : "none";
-      document.getElementById("hatchBtn").style.display = nearbyEggToHatch ? "block" : "none";
-
-      // 플레이어 그리기
-      drawRoundRect(180 - playerWorld.size/2, 260 - playerWorld.size/2, playerWorld.size, playerWorld.size, 8, "#f59e0b");
-
-      if (holding) {
-        const bounce = Math.sin(Date.now() / 150) * 3;
-        drawEgg(180, 260 - playerWorld.size - 6 + bounce, holding.color, holding.pattern, 0.75);
-      }
-
-      checkBaseDeposit();
-      requestAnimationFrame(update);
-    }
-
-    function pickUpEgg() {
-      if (!eggToPickUp || holding) return;
-
-      if (baseSpeed >= eggToPickUp.reqSpeed) {
-        holding = eggToPickUp;
-        document.getElementById("holdingVal").innerText = eggToPickUp.name;
-        const idx = fieldEggs.indexOf(eggToPickUp);
-        if (idx !== -1) fieldEggs.splice(idx, 1);
-        eggToPickUp = null;
-      } else {
-        showNotification(`속도가 부족합니다! (필요: ${eggToPickUp.reqSpeed})`);
-      }
-    }
-
-    function getNextBaseEggPosition() {
-      const startX = myBaseWorld.x + 35;
-      const startY = myBaseWorld.y + 60;
-      const gapX = 38;
-      const gapY = 40;
-      const cols = 4;
-
-      const idx = baseInstalledEggs.length;
-      const col = idx % cols;
-      const row = Math.floor(idx / cols);
-
-      return { x: startX + col * gapX, y: startY + row * gapY };
-    }
-
-    function checkBaseDeposit() {
-      if (holding && playerWorld.x < myBaseWorld.x + myBaseWorld.w &&
-          playerWorld.y > myBaseWorld.y && playerWorld.y < myBaseWorld.y + myBaseWorld.h) {
-
-        const pos = getNextBaseEggPosition();
-
-        baseInstalledEggs.push({
-          x: pos.x,
-          y: pos.y,
-          name: holding.name,
-          color: holding.color,
-          pattern: holding.pattern,
-          bonus: holding.bonus,
-          hatchEndTime: Date.now() + holding.hatchTime * 1000
-        });
-
-        showNotification("알을 훔쳐왔습니다!");
-
-        holding = null;
-        document.getElementById("holdingVal").innerText = "없음";
-      }
-    }
-
-    function hatchNearbyEgg() {
-      if (!nearbyEggToHatch) return;
-
-      const idx = baseInstalledEggs.indexOf(nearbyEggToHatch);
-      if (idx !== -1) {
-        baseSpeed += nearbyEggToHatch.bonus;
-        showNotification(`🎉 부화 성공! 속도 +${nearbyEggToHatch.bonus}`);
-        baseInstalledEggs.splice(idx, 1);
-      }
-    }
-
-    function runTreadmill() {
-      baseSpeed += 2;
-      showNotification("🏃 속도가 +2 증가했습니다!");
-    }
-
-    /* 조이스틱 컨트롤 이벤트 */
-    const joystickZone = document.getElementById("joystickZone");
-    const joystickKnob = document.getElementById("joystickKnob");
+    // 조이스틱 변수
+    const joyBase = document.getElementById('joyBase');
+    const joyStick = document.getElementById('joyStick');
     let isDragging = false;
-    const maxRadius = 30;
+    const maxRadius = 32;
 
-    function handleJoystickMove(clientX, clientY) {
-      const rect = joystickZone.getBoundingClientRect();
+    // 플레이어 이동 및 속도 관련 상태
+    let cameraX = 0;
+    let cameraY = 0;
+    let moveX = 0;
+    let moveY = 0;
+    let speed = 10.0; // 기본 달리기 속도 (S)
+
+    function handleStart() { isDragging = true; }
+    function handleEnd() {
+      isDragging = false;
+      joyStick.style.transform = 'translate(0px, 0px)';
+      moveX = 0;
+      moveY = 0;
+    }
+
+    function handleMove(e) {
+      if (!isDragging) return;
+      const rect = joyBase.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
 
-      let dx = clientX - centerX;
-      let dy = clientY - centerY;
-      const distance = Math.hypot(dx, dy);
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
+      let deltaX = clientX - centerX;
+      let deltaY = clientY - centerY;
+
+      const distance = Math.hypot(deltaX, deltaY);
       if (distance > maxRadius) {
-        dx = (dx / distance) * maxRadius;
-        dy = (dy / distance) * maxRadius;
+        deltaX = (deltaX / distance) * maxRadius;
+        deltaY = (deltaY / distance) * maxRadius;
       }
 
-      joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-      moveInput.x = dx / maxRadius;
-      moveInput.y = dy / maxRadius;
+      joyStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+      // 현재 속도(speed) 비율에 맞춰 캐릭터 이동력 계산
+      const speedFactor = speed / 3;
+      moveX = (deltaX / maxRadius) * speedFactor;
+      moveY = (deltaY / maxRadius) * speedFactor;
     }
 
-    function resetJoystick() {
-      isDragging = false;
-      joystickKnob.style.transform = `translate(0px, 0px)`;
-      moveInput = { x: 0, y: 0 };
+    let lastTime = performance.now();
+
+    // 메인 업데이트 루프
+    function updateGame(now) {
+      if (modal.style.display === 'flex') {
+        const delta = (now - lastTime) / 1000; // 초 단위 시간 측정
+
+        cameraX += moveX;
+        cameraY -= moveY;
+
+        if (cameraY < 0) cameraY = 0;
+        if (cameraY > 2100) cameraY = 2100;
+
+        world.style.transform = `translate(${-cameraX}px, ${cameraY}px)`;
+
+        // 러닝머신 위에 캐릭터가 올라갔는지 충돌 체크
+        // (카메라X/Y가 러닝머신 좌표 근처에 위치할 때)
+        const treadX = 160; 
+        const treadY = 120;
+        const isOnTreadmill = Math.abs(cameraX - treadX) < 40 && Math.abs(cameraY - treadY) < 50;
+
+        if (isOnTreadmill) {
+          // 초당 0.5씩 속도 증가
+          speed += 0.5 * delta;
+        }
+
+        // UI 텍스트 업데이트
+        sText.innerText = `S:${speed.toFixed(1)}`;
+        const currentM = Math.floor(cameraY / 10);
+        mText.innerText = `M:${String(currentM).padStart(3, '0')}`;
+      }
+      lastTime = now;
+      requestAnimationFrame(updateGame);
     }
 
-    joystickZone.addEventListener("pointerdown", (e) => {
-      isDragging = true;
-      joystickZone.setPointerCapture(e.pointerId);
-      handleJoystickMove(e.clientX, e.clientY);
-    });
+    joyBase.addEventListener('mousedown', handleStart);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('mousemove', handleMove);
 
-    joystickZone.addEventListener("pointermove", (e) => {
-      if (isDragging) handleJoystickMove(e.clientX, e.clientY);
-    });
+    joyBase.addEventListener('touchstart', handleStart);
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchmove', handleMove);
 
-    joystickZone.addEventListener("pointerup", resetJoystick);
-    joystickZone.addEventListener("pointercancel", resetJoystick);
-
-    // 초기화 후 실행
-    spawnFieldEggs();
-    update();
+    requestAnimationFrame(updateGame);
   </script>
+
 </body>
 </html>
