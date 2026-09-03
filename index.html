@@ -13,6 +13,7 @@
       margin: 0;
       padding: 10px;
       touch-action: manipulation;
+      user-select: none;
     }
     .status-bar {
       display: flex;
@@ -20,9 +21,9 @@
       background: #14532d;
       padding: 10px;
       border-radius: 10px;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
       border: 1px solid #22c55e;
     }
@@ -31,52 +32,60 @@
       border: 4px solid #166534;
       border-radius: 12px;
       max-width: 95vw;
-      max-height: 42vh;
+      max-height: 38vh;
       box-shadow: 0 8px 16px rgba(0,0,0,0.5);
     }
     .action-panel {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-top: 10px;
+      margin-top: 8px;
     }
     .btn {
       background: #3b82f6;
       color: white;
       border: none;
-      padding: 12px;
+      padding: 10px;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 14px;
+      font-size: 13px;
     }
     .btn-treadmill { background: #10b981; }
     .btn:active { transform: scale(0.98); opacity: 0.9; }
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(3, 55px);
-      gap: 6px;
+
+    /* 가상 조이스틱 컨테이너 */
+    .joystick-container {
+      display: flex;
       justify-content: center;
+      align-items: center;
       margin-top: 10px;
     }
-    .ctrl-btn {
-      width: 55px;
-      height: 55px;
-      font-size: 22px;
-      background: #1e3a8a;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 4px #1e40af;
+    #joystickZone {
+      width: 110px;
+      height: 110px;
+      background: rgba(30, 58, 138, 0.6);
+      border: 3px solid #3b82f6;
+      border-radius: 50%;
+      position: relative;
+      touch-action: none;
     }
-    .ctrl-btn:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px #1e40af;
+    #joystickKnob {
+      width: 45px;
+      height: 45px;
+      background: #60a5fa;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     }
-    .empty { visibility: hidden; }
+
     #baseInfo {
-      margin-top: 8px;
+      margin-top: 6px;
       font-size: 13px;
       color: #86efac;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -89,16 +98,13 @@
     <div>🎒 들고 있는 알: <span id="holdingVal">없음</span></div>
   </div>
 
-  <canvas id="gameCanvas" width="400" height="260"></canvas>
+  <canvas id="gameCanvas" width="400" height="240"></canvas>
 
-  <!-- 조작 버튼 -->
-  <div class="controls">
-    <div class="empty"></div>
-    <button class="ctrl-btn" ontouchstart="startMove('UP')" ontouchend="stopMove()" onmousedown="startMove('UP')" onmouseup="stopMove()">⬆️</button>
-    <div class="empty"></div>
-    <button class="ctrl-btn" ontouchstart="startMove('LEFT')" ontouchend="stopMove()" onmousedown="startMove('LEFT')" onmouseup="stopMove()">⬅️</button>
-    <button class="ctrl-btn" ontouchstart="startMove('DOWN')" ontouchend="stopMove()" onmousedown="startMove('DOWN')" onmouseup="stopMove()">⬇️</button>
-    <button class="ctrl-btn" ontouchstart="startMove('RIGHT')" ontouchend="stopMove()" onmousedown="startMove('RIGHT')" onmouseup="stopMove()">➡️</button>
+  <!-- 가상 조이스틱 -->
+  <div class="joystick-container">
+    <div id="joystickZone">
+      <div id="joystickKnob"></div>
+    </div>
   </div>
 
   <!-- 액션 패널 -->
@@ -115,22 +121,26 @@
 
     let speed = 5;
     let holding = null;
+
+    // 기지 설치 알 관련 변수 (타이머)
     let installedEgg = null;
+    let hatchEndTime = 0;
 
     // 캐릭터 위치
-    const playerWorld = { x: 80, y: 130, size: 24 };
+    const playerWorld = { x: 80, y: 120, size: 24 };
 
-    // 커진 내 기지 설정 (크기 확장)
-    const myBaseWorld = { x: -20, y: 30, w: 130, h: 200 };
+    // 커진 내 기지
+    const myBaseWorld = { x: -20, y: 20, w: 130, h: 200 };
 
-    let moveDir = null;
+    // 조이스틱 이동 입력 벡터 (-1 ~ 1)
+    let moveInput = { x: 0, y: 0 };
 
-    // 알 데이터
+    // 알 데이터 (알마다 고유 부화 시간 적용: hatchTime - 초 단위)
     const eggs = [
-      { x: 260, y: 130, name: "기본 알", reqSpeed: 5, color: "#ffffff", pattern: "#cbd5e1" },
-      { x: 500, y: 130, name: "정글 전갈 알 🦂", reqSpeed: 9, color: "#10b981", pattern: "#047857" },
-      { x: 750, y: 130, name: "코스믹 알 🌌", reqSpeed: 15, color: "#a855f7", pattern: "#6b21a8" },
-      { x: 1000, y: 130, name: "🔥 피닉스 알", reqSpeed: 23, color: "#ef4444", pattern: "#b91c1c" }
+      { x: 260, y: 120, name: "기본 알", reqSpeed: 5, color: "#ffffff", pattern: "#cbd5e1", hatchTime: 5, bonus: 3 },
+      { x: 500, y: 120, name: "정글 전갈 알 🦂", reqSpeed: 9, color: "#10b981", pattern: "#047857", hatchTime: 12, bonus: 5 },
+      { x: 750, y: 120, name: "코스믹 알 🌌", reqSpeed: 15, color: "#a855f7", pattern: "#6b21a8", hatchTime: 25, bonus: 8 },
+      { x: 1000, y: 120, name: "🔥 피닉스 알", reqSpeed: 23, color: "#ef4444", pattern: "#b91c1c", hatchTime: 45, bonus: 15 }
     ];
 
     // 둥근 사각형 (캐릭터)
@@ -149,11 +159,15 @@
       ctx.stroke();
     }
 
-    // 알 그리기
-    function drawEgg(x, y, mainColor, patternColor) {
+    // 알 그리기 함수
+    function drawEgg(x, y, mainColor, patternColor, scale = 1) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
       ctx.fillStyle = mainColor;
       ctx.beginPath();
-      ctx.ellipse(x, y, 14, 18, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 14, 18, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "#000000";
       ctx.lineWidth = 1.5;
@@ -161,24 +175,23 @@
 
       ctx.fillStyle = patternColor;
       ctx.beginPath();
-      ctx.arc(x - 4, y - 5, 3, 0, Math.PI * 2);
-      ctx.arc(x + 5, y + 2, 4, 0, Math.PI * 2);
-      ctx.arc(x - 2, y + 7, 2.5, 0, Math.PI * 2);
+      ctx.arc(-4, -5, 3, 0, Math.PI * 2);
+      ctx.arc(5, 2, 4, 0, Math.PI * 2);
+      ctx.arc(-2, 7, 2.5, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.restore();
     }
 
-    // 나무 울타리 그리기 함수
+    // 울타리 그리기
     function drawFence(x, y, width, height) {
-      ctx.strokeStyle = "#78350f"; // 울타리 기둥 색상
+      ctx.strokeStyle = "#78350f";
       ctx.lineWidth = 4;
-
-      // 가로 울타리 살
       ctx.beginPath();
       ctx.moveTo(x, y + 8); ctx.lineTo(x + width, y + 8);
       ctx.moveTo(x, y + height - 8); ctx.lineTo(x + width, y + height - 8);
       ctx.stroke();
 
-      // 세로 기둥들
       ctx.fillStyle = "#b45309";
       for (let p = x; p <= x + width; p += 16) {
         ctx.fillRect(p - 2, y, 5, height);
@@ -187,24 +200,22 @@
 
     // 메인 게임 루프
     function update() {
-      // 이동
-      if (moveDir === 'UP') playerWorld.y -= speed * 0.6;
-      if (moveDir === 'DOWN') playerWorld.y += speed * 0.6;
-      if (moveDir === 'LEFT' && playerWorld.x > 15) playerWorld.x -= speed * 0.6;
-      if (moveDir === 'RIGHT') playerWorld.x += speed * 0.6;
+      // 조이스틱 입력에 따른 부드러운 위치 이동
+      playerWorld.x += moveInput.x * speed * 0.6;
+      playerWorld.y += moveInput.y * speed * 0.6;
 
-      // Y축 맵 범위
+      // X/Y축 경계선 제한
+      if (playerWorld.x < 15) playerWorld.x = 15;
       if (playerWorld.y < 20) playerWorld.y = 20;
-      if (playerWorld.y > 240) playerWorld.y = 240;
+      if (playerWorld.y > 220) playerWorld.y = 220;
 
       const cameraX = playerWorld.x - 200;
-      const cameraY = playerWorld.y - 130;
+      const cameraY = playerWorld.y - 120;
 
       // 잔디밭 배경
       ctx.fillStyle = "#15803d";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 잔디 패턴 (체크/격자 느낌의 밝은 잔디)
       ctx.fillStyle = "#16a34a";
       const gridSize = 40;
       const startX = -(cameraX % gridSize);
@@ -217,20 +228,24 @@
         }
       }
 
-      // 내 기지 바닥 (흙/집 공간)
+      // 내 기지 바닥
       const baseSX = myBaseWorld.x - cameraX;
       const baseSY = myBaseWorld.y - cameraY;
       ctx.fillStyle = "#a16207";
       ctx.fillRect(baseSX, baseSY, myBaseWorld.w, myBaseWorld.h);
 
-      // 기지 주변 나무 울타리
-      drawFence(baseSX, baseSY, myBaseWorld.w, 12); // 위쪽 울타리
-      drawFence(baseSX, baseSY + myBaseWorld.h - 12, myBaseWorld.w, 12); // 아래쪽 울타리
-      drawFence(baseSX + myBaseWorld.w - 8, baseSY, 8, myBaseWorld.h); // 오른쪽 울타리
+      drawFence(baseSX, baseSY, myBaseWorld.w, 12);
+      drawFence(baseSX, baseSY + myBaseWorld.h - 12, myBaseWorld.w, 12);
+      drawFence(baseSX + myBaseWorld.w - 8, baseSY, 8, myBaseWorld.h);
 
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 13px Arial";
-      ctx.fillText("내 기지 🏡", baseSX + 30, baseSY + 105);
+      ctx.fillText("내 기지 🏡", baseSX + 30, baseSY + 100);
+
+      // 훔쳐온 알이 기지에 배치되어 있는 경우 시각화
+      if (installedEgg) {
+        drawEgg(baseSX + 65, baseSY + 125, installedEgg.color, installedEgg.pattern, 0.9);
+      }
 
       // 알 배치
       eggs.forEach(e => {
@@ -241,21 +256,27 @@
 
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 11px Arial";
-        ctx.fillText(`${e.name}`, eggSX - 25, eggSY + 30);
-        ctx.fillText(`(속도 ${e.reqSpeed})`, eggSX - 20, eggSY + 44);
+        ctx.fillText(`${e.name}`, eggSX - 25, eggSY + 28);
+        ctx.fillText(`(속도 ${e.reqSpeed} / ${e.hatchTime}초)`, eggSX - 30, eggSY + 42);
       });
 
       // 플레이어 (중앙 고정)
-      drawRoundRect(200 - playerWorld.size/2, 130 - playerWorld.size/2, playerWorld.size, playerWorld.size, 8, "#f59e0b");
+      drawRoundRect(200 - playerWorld.size/2, 120 - playerWorld.size/2, playerWorld.size, playerWorld.size, 8, "#f59e0b");
+
+      // [핵심 디테일] 알을 들고 갈 때 머리 위에 둥둥 떠다니는 알 모션
+      if (holding) {
+        const bounce = Math.sin(Date.now() / 150) * 3; // 위아래로 살짝 흔들리는 효과
+        drawEgg(200, 120 - playerWorld.size - 10 + bounce, holding.color, holding.pattern, 0.75);
+      }
+
+      // 부화 타이머 실시간 갱신 표시
+      updateHatchUI();
 
       // 충돌 검사
       checkCollisions();
 
       requestAnimationFrame(update);
     }
-
-    function startMove(dir) { moveDir = dir; }
-    function stopMove() { moveDir = null; }
 
     function checkCollisions() {
       // 알 훔치기
@@ -267,22 +288,47 @@
               holding = e;
               document.getElementById("holdingVal").innerText = e.name;
             } else {
-              stopMove();
-              alert(`이 알을 훔치려면 속도가 [${e.reqSpeed}] 이상이어야 합니다!\n런닝머신을 타고 속도를 올리세요!`);
+              moveInput = { x: 0, y: 0 };
+              resetJoystick();
+              alert(`이 알을 훔치려면 속도가 [${e.reqSpeed}] 이상이어야 합니다!\n런닝머신을 타고 속도를 올려오세요!`);
               playerWorld.x -= 20;
             }
           }
         }
       });
 
-      // 기지로 알을 갖고 들어왔을 때
+      // 기지로 알 가지고 들어왔을 때
       if (holding && playerWorld.x < myBaseWorld.x + myBaseWorld.w &&
           playerWorld.y > myBaseWorld.y && playerWorld.y < myBaseWorld.y + myBaseWorld.h) {
-        installedEgg = holding.name;
+
+        if (installedEgg) {
+          alert("기지에 이미 부화 중인 알이 있습니다! 부화시킨 후 새 알을 놓으세요.");
+          playerWorld.x += 15;
+          return;
+        }
+
+        installedEgg = holding;
+        hatchEndTime = Date.now() + holding.hatchTime * 1000;
         holding = null;
+
         document.getElementById("holdingVal").innerText = "없음";
-        document.getElementById("installedEgg").innerText = installedEgg + " (부화 대기 중)";
-        alert(`🏡 기지에 [${installedEgg}]를 성공적으로 설치했습니다!`);
+        alert(`🏡 [${installedEgg.name}]를 기지에 설치했습니다! (부화까지 ${installedEgg.hatchTime}초 소요)`);
+      }
+    }
+
+    // 부화 타이머 UI 갱신 함수
+    function updateHatchUI() {
+      const baseInfoEl = document.getElementById("installedEgg");
+      if (!installedEgg) {
+        baseInfoEl.innerText = "없음";
+        return;
+      }
+
+      const remainSec = Math.max(0, Math.ceil((hatchEndTime - Date.now()) / 1000));
+      if (remainSec > 0) {
+        baseInfoEl.innerText = `${installedEgg.name} (부화까지 ${remainSec}초 남음 ⏳)`;
+      } else {
+        baseInfoEl.innerText = `${installedEgg.name} (🎉 부화 준비 완료! 버튼을 누르세요)`;
       }
     }
 
@@ -297,11 +343,86 @@
         alert("기지에 설치된 알이 없습니다!");
         return;
       }
-      alert(`🎉 [${installedEgg}] 부화 성공! 속도가 +3 증가합니다!`);
-      speed += 3;
+
+      const remainSec = Math.max(0, Math.ceil((hatchEndTime - Date.now()) / 1000));
+      if (remainSec > 0) {
+        alert(`아직 부화 시간이 남았습니다! (${remainSec}초 남음)`);
+        return;
+      }
+
+      alert(`🎉 [${installedEgg.name}] 부화 성공! 이동 속도가 +${installedEgg.bonus} 대폭 증가합니다!`);
+      speed += installedEgg.bonus;
       document.getElementById("speedVal").innerText = speed;
+
       installedEgg = null;
       document.getElementById("installedEgg").innerText = "없음";
+    }
+
+    /* --- 조이스틱 터치/마우스 이벤트 처리 --- */
+    const joystickZone = document.getElementById("joystickZone");
+    const joystickKnob = document.getElementById("joystickKnob");
+    let isDragging = false;
+    const maxRadius = 35;
+
+    function handleJoystickMove(clientX, clientY) {
+      const rect = joystickZone.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      let dx = clientX - centerX;
+      let dy = clientY - centerY;
+      const distance = Math.hypot(dx, dy);
+
+      if (distance > maxRadius) {
+        dx = (dx / distance) * maxRadius;
+        dy = (dy / distance) * maxRadius;
+      }
+
+      joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+      moveInput.x = dx / maxRadius;
+      moveInput.y = dy / maxRadius;
+    }
+
+    function resetJoystick() {
+      isDragging = false;
+      joystickKnob.style.transform = `translate(0px, 0px)`;
+      moveInput = { x: 0, y: 0 };
+    }
+
+    joystickZone.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      joystickZone.setPointerCapture(e.pointerId);
+      handleJoystickMove(e.clientX, e.clientY);
+    });
+
+    joystickZone.addEventListener("pointermove", (e) => {
+      if (isDragging) handleJoystickMove(e.clientX, e.clientY);
+    });
+
+    joystickZone.addEventListener("pointerup", resetJoystick);
+    joystickZone.addEventListener("pointercancel", resetJoystick);
+
+    // 키보드 조작 지원 (즉시 방향 전환)
+    const keys = {};
+    window.addEventListener("keydown", (e) => {
+      keys[e.key] = true;
+      updateKeyInput();
+    });
+    window.addEventListener("keyup", (e) => {
+      keys[e.key] = false;
+      updateKeyInput();
+    });
+
+    function updateKeyInput() {
+      if (isDragging) return;
+      let kx = 0, ky = 0;
+      if (keys["ArrowLeft"] || keys["a"] || keys["A"]) kx -= 1;
+      if (keys["ArrowRight"] || keys["d"] || keys["D"]) kx += 1;
+      if (keys["ArrowUp"] || keys["w"] || keys["W"]) ky -= 1;
+      if (keys["ArrowDown"] || keys["s"] || keys["S"]) ky += 1;
+
+      moveInput.x = kx;
+      moveInput.y = ky;
     }
 
     update();
