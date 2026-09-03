@@ -47,7 +47,7 @@
       z-index: 1000;
     }
 
-    /* 팝업 창 (뷰포트) */
+    /* 팝업 창 */
     .modal-content {
       position: relative;
       width: 85vw;
@@ -58,7 +58,7 @@
       overflow: hidden;
     }
 
-    /* 월드 맵 */
+    /* 위쪽 수직 구조 월드 맵 */
     .world {
       position: absolute;
       width: 2000px;
@@ -67,11 +67,11 @@
       left: -800px;
       background: linear-gradient(
         to top,
-        #86efac 0px, #86efac 500px,       /* 1구역: 연두 */
-        #22c55e 500px, #22c55e 1000px,   /* 2구역: 초록 */
-        #3b82f6 1000px, #3b82f6 1500px,  /* 3구역: 파랑 */
-        #a855f7 1500px, #a855f7 2000px,  /* 4구역: 보라 */
-        #ffedd5 2000px, #ffedd5 2500px   /* 5구역: 살구 */
+        #86efac 0px, #86efac 500px,       /* 1: 연두 */
+        #22c55e 500px, #22c55e 1000px,   /* 2: 초록 */
+        #3b82f6 1000px, #3b82f6 1500px,  /* 3: 파랑 */
+        #a855f7 1500px, #a855f7 2000px,  /* 4: 보라 */
+        #ffedd5 2000px, #ffedd5 2500px   /* 5: 살구 */
       );
     }
 
@@ -91,45 +91,42 @@
       );
     }
 
-    /* 울타리 위쪽에 위치한 러닝머신 오브젝트 */
+    /* 울타리 위 러닝머신 */
     .treadmill {
       position: absolute;
-      bottom: 120px; /* 울타리 위쪽 연두 구역에 설치 */
-      left: 960px;   /* 시작 중앙 근처 */
-      width: 80px;
-      height: 100px;
+      bottom: 150px;
+      left: 960px;
+      width: 70px;
+      height: 90px;
       background-color: #334155;
       border: 3px solid #0f172a;
-      border-radius: 12px;
+      border-radius: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 6px;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+      padding: 5px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .treadmill-screen {
+      width: 70%;
+      height: 12px;
+      background-color: #38bdf8;
+      border-radius: 3px;
     }
 
     .treadmill-belt {
       width: 100%;
-      height: 60px;
+      height: 55px;
       background: repeating-linear-gradient(
         0deg,
-        #1e293b,
-        #1e293b 10px,
-        #475569 10px,
-        #475569 14px
+        #0f172a,
+        #0f172a 8px,
+        #475569 8px,
+        #475569 12px
       );
-      border-radius: 6px;
-    }
-
-    .treadmill-screen {
-      width: 60%;
-      height: 14px;
-      background-color: #38bdf8;
       border-radius: 4px;
-      font-size: 10px;
-      text-align: center;
-      line-height: 14px;
     }
 
     /* 왼쪽 위 빨간색 X 버튼 */
@@ -157,7 +154,7 @@
       background-color: #dc2626;
     }
 
-    /* 왼쪽 아래 스탯 UI (돈/신발 아이콘) */
+    /* 왼쪽 아래 UI 스탯 */
     .stats-ui {
       position: absolute;
       bottom: 20px;
@@ -177,10 +174,10 @@
       gap: 6px;
     }
 
-    .stat-s { color: #3b82f6; } /* 파란색 S:(속도) */
+    .stat-s { color: #3b82f6; } /* 파란색 S:속도 */
     .stat-m { color: #22c55e; } /* 초록색 M:000 */
 
-    /* 화면 중앙 고정 캐릭터 */
+    /* 중앙 고정 캐릭터 */
     .character {
       position: absolute;
       top: 50%;
@@ -226,22 +223,20 @@
   <!-- 알 아이콘 버튼 -->
   <button class="egg-btn" id="openModal">🥚</button>
 
-  <!-- 버튼 클릭 시 열리는 창 -->
+  <!-- 버튼 누르면 나오는 창 -->
   <div class="modal-overlay" id="modal">
     <div class="modal-content" id="modalContent">
       <!-- 왼쪽 위 빨간색 X 버튼 -->
       <button class="close-btn" id="closeModal">✕</button>
 
-      <!-- 왼쪽 아래 스탯 UI -->
+      <!-- 왼쪽 아래 스탯 UI (하늘색 신발 + 파란색 S / 돈 아이콘 + 초록색 M) -->
       <div class="stats-ui">
-        <!-- 위쪽: 하늘색 신발 아이콘 + 파란색 속도 텍스트 -->
         <div class="stat-row">
-          <span style="font-size:20px;">👟</span>
+          <span style="color: #38bdf8; font-size: 20px;">👟</span>
           <span class="stat-s" id="sText">S:10.0</span>
         </div>
-        <!-- 아래쪽: 돈 아이콘 + 초록색 M:000 텍스트 -->
         <div class="stat-row">
-          <span style="font-size:20px;">💵</span>
+          <span style="font-size: 20px;">💵</span>
           <span class="stat-m" id="mText">M:000</span>
         </div>
       </div>
@@ -249,9 +244,9 @@
       <!-- 위쪽 수직 구조 월드 맵 -->
       <div class="world" id="world">
         <div class="fence"></div>
-        <!-- 울타리 위쪽에 위치한 러닝머신 -->
-        <div class="treadmill" id="treadmill">
-          <div class="treadmill-screen">RUN</div>
+        <!-- 울타리 위 러닝머신 -->
+        <div class="treadmill">
+          <div class="treadmill-screen"></div>
           <div class="treadmill-belt"></div>
         </div>
       </div>
@@ -273,7 +268,6 @@
     const world = document.getElementById('world');
     const mText = document.getElementById('mText');
     const sText = document.getElementById('sText');
-    const treadmill = document.getElementById('treadmill');
 
     openBtn.addEventListener('click', () => modal.style.display = 'flex');
     closeBtn.addEventListener('click', () => modal.style.display = 'none');
@@ -284,12 +278,12 @@
     let isDragging = false;
     const maxRadius = 32;
 
-    // 플레이어 이동 및 속도 관련 상태
+    // 카메라인 월드 좌표 및 속도
     let cameraX = 0;
     let cameraY = 0;
     let moveX = 0;
     let moveY = 0;
-    let speed = 10.0; // 기본 달리기 속도 (S)
+    let speed = 10.0;
 
     function handleStart() { isDragging = true; }
     function handleEnd() {
@@ -319,18 +313,17 @@
 
       joyStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
 
-      // 현재 속도(speed) 비율에 맞춰 캐릭터 이동력 계산
-      const speedFactor = speed / 3;
+      // 조이스틱 입력 + 현재 속도(S) 반영
+      const speedFactor = (speed / 10) * 4.5;
       moveX = (deltaX / maxRadius) * speedFactor;
       moveY = (deltaY / maxRadius) * speedFactor;
     }
 
     let lastTime = performance.now();
 
-    // 메인 업데이트 루프
     function updateGame(now) {
       if (modal.style.display === 'flex') {
-        const delta = (now - lastTime) / 1000; // 초 단위 시간 측정
+        const delta = (now - lastTime) / 1000;
 
         cameraX += moveX;
         cameraY -= moveY;
@@ -340,18 +333,13 @@
 
         world.style.transform = `translate(${-cameraX}px, ${cameraY}px)`;
 
-        // 러닝머신 위에 캐릭터가 올라갔는지 충돌 체크
-        // (카메라X/Y가 러닝머신 좌표 근처에 위치할 때)
-        const treadX = 160; 
-        const treadY = 120;
-        const isOnTreadmill = Math.abs(cameraX - treadX) < 40 && Math.abs(cameraY - treadY) < 50;
-
+        // 러닝머신 위 감지 (초당 +0.5 속도 증가)
+        const isOnTreadmill = Math.abs(cameraX - 160) < 35 && Math.abs(cameraY - 150) < 45;
         if (isOnTreadmill) {
-          // 초당 0.5씩 속도 증가
           speed += 0.5 * delta;
         }
 
-        // UI 텍스트 업데이트
+        // 스탯 텍스트 표시
         sText.innerText = `S:${speed.toFixed(1)}`;
         const currentM = Math.floor(cameraY / 10);
         mText.innerText = `M:${String(currentM).padStart(3, '0')}`;
