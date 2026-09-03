@@ -196,7 +196,7 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    let baseSpeed = 5; // 플레이어의 누적 본래 속도
+    let baseSpeed = 5;
     let holding = null;
 
     // 플레이어
@@ -219,7 +219,7 @@
       maxX: 3850
     };
 
-    // 구역 설정 (초록 구역: -50 ~ 500)
+    // 구역 설정
     const ZONES = [
       { name: "안전 구역", minX: -50, maxX: 500, bgColor: "#15803d" },
       { name: "기본 알 구역", minX: 500, maxX: 1300, bgColor: "#1e3a8a", eggType: { name: "기본 알", reqSpeed: 5, color: "#ffffff", pattern: "#cbd5e1", hatchTime: 5, bonus: 3 } },
@@ -235,6 +235,7 @@
 
     function showNotification(msg) {
       const el = document.getElementById("notificationText");
+      if (!el) return;
       el.innerText = msg;
       el.style.opacity = "1";
 
@@ -326,10 +327,247 @@
     }
 
     function update() {
-      // --- [속도 계산: 초록 구역(x <= 500)에 있을 때는 속도 5 고정] ---
+      // 속도 계산 (초록 구역: x <= 500 내에서는 5 고정)
       let activeSpeed = baseSpeed;
       if (playerWorld.x <= 500) {
         activeSpeed = 5;
         document.getElementById("speedVal").innerText = "5 (고정)";
       } else {
-        document.getElementById("speedVal").innerText = baseSpeed
+        document.getElementById("speedVal").innerText = baseSpeed;
+      }
+
+      // 플레이어 이동 처리
+      playerWorld.x += moveInput.x * activeSpeed * 0.7;
+      playerWorld.y += moveInput.y * activeSpeed * 0.7;
+
+      if (playerWorld.x < MAP_LIMIT.minX + 15) playerWorld.x = MAP_LIMIT.minX + 15;
+      if (playerWorld.x > MAP_LIMIT.maxX - 15) playerWorld.x = MAP_LIMIT.maxX - 15;
+      if (playerWorld.y < MAP_LIMIT.minY + 15) playerWorld.y = MAP_LIMIT.minY + 15;
+      if (playerWorld.y > MAP_LIMIT.maxY - 15) playerWorld.y = MAP_LIMIT.maxY - 15;
+
+      const cameraX = playerWorld.x - 180;
+      const cameraY = playerWorld.y - 260;
+
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const elapsed = Date.now() - lastResetTime;
+      const remainResetSec = Math.max(0, Math.ceil((RESET_INTERVAL - elapsed) / 1000));
+      document.getElementById("resetTimer").innerText = remainResetSec;
+      if (elapsed >= RESET_INTERVAL) {
+        spawnFieldEggs();
+      }
+
+      // 타일 구역 그리기
+      ZONES.forEach(zone => {
+        const zSX = zone.minX - cameraX;
+        const zWidth = zone.maxX - zone.minX;
+        ctx.fillStyle = zone.bgColor;
+        ctx.fillRect(zSX, 0, zWidth, canvas.height);
+      });
+
+      // x = 500 위치에 얇은 빨간 경계선
+      const redLineSX = 500 - cameraX;
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(redLineSX, MAP_LIMIT.minY - cameraY);
+      ctx.lineTo(redLineSX, MAP_LIMIT.maxY - cameraY);
+      ctx.stroke();
+
+      drawMapWalls(cameraX, cameraY);
+
+      // 기지 그리기
+      const baseSX = myBaseWorld.x - cameraX;
+      const baseSY = myBaseWorld.y - cameraY;
+      ctx.fillStyle = "#854d0e";
+      ctx.fillRect(baseSX, baseSY, myBaseWorld.w, myBaseWorld.h);
+      ctx.strokeStyle = "#fef08a";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(baseSX, baseSY, myBaseWorld.w, myBaseWorld.h);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 13px Arial";
+      ctx.fillText("내 기지 🏡", baseSX + 75, baseSY + 25);
+
+      const now = Date.now();
+      nearbyEggToHatch = null;
+
+      // 기지 내부 알 처리
+      baseInstalledEggs.forEach(egg => {
+        const eggSX = egg.x - cameraX;
+        const eggSY = egg.y - cameraY;
+
+        drawEgg(eggSX, eggSY, egg.color, egg.pattern, 0.85);
+
+        const remainSec = Math.max(0, Math.ceil((egg.hatchEndTime - now) / 1000));
+
+        if (remainSec > 0) {
+          ctx.fillStyle = "#fde047";
+          ctx.font = "bold 11px Arial";
+          ctx.fillText(`${remainSec}초`, eggSX - 8, eggSY - 14);
+        } else {
+          ctx.fillStyle = "#ef4444";
+          ctx.font = "bold 18px Arial";
+          ctx.fillText("!", eggSX - 3, eggSY - 14);
+
+          const dist = Math.hypot(playerWorld.x - egg.x, playerWorld.y - egg.y);
+          if (dist < 35) {
+            nearbyEggToHatch = egg;
+          }
+        }
+      });
+
+      // 필드 알 처리
+      eggToPickUp = null;
+      fieldEggs.forEach(e => {
+        const eggSX = e.x - cameraX;
+        const eggSY = e.y - cameraY;
+
+        drawEgg(eggSX, eggSY, e.color, e.pattern);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(`${e.name}`, eggSX - 20, eggSY + 22);
+        ctx.fillText(`(속도 ${e.reqSpeed})`, eggSX - 15, eggSY + 34);
+
+        if (!holding) {
+          const dist = Math.hypot(playerWorld.x - e.x, playerWorld.y - e.y);
+          if (dist < 32) {
+            eggToPickUp = e;
+          }
+        }
+      });
+
+      document.getElementById("pickupBtn").style.display = eggToPickUp ? "block" : "none";
+      document.getElementById("hatchBtn").style.display = nearbyEggToHatch ? "block" : "none";
+
+      // 플레이어 그리기
+      drawRoundRect(180 - playerWorld.size/2, 260 - playerWorld.size/2, playerWorld.size, playerWorld.size, 8, "#f59e0b");
+
+      if (holding) {
+        const bounce = Math.sin(Date.now() / 150) * 3;
+        drawEgg(180, 260 - playerWorld.size - 6 + bounce, holding.color, holding.pattern, 0.75);
+      }
+
+      checkBaseDeposit();
+      requestAnimationFrame(update);
+    }
+
+    function pickUpEgg() {
+      if (!eggToPickUp || holding) return;
+
+      if (baseSpeed >= eggToPickUp.reqSpeed) {
+        holding = eggToPickUp;
+        document.getElementById("holdingVal").innerText = eggToPickUp.name;
+        const idx = fieldEggs.indexOf(eggToPickUp);
+        if (idx !== -1) fieldEggs.splice(idx, 1);
+        eggToPickUp = null;
+      } else {
+        showNotification(`속도가 부족합니다! (필요: ${eggToPickUp.reqSpeed})`);
+      }
+    }
+
+    function getNextBaseEggPosition() {
+      const startX = myBaseWorld.x + 35;
+      const startY = myBaseWorld.y + 60;
+      const gapX = 38;
+      const gapY = 40;
+      const cols = 4;
+
+      const idx = baseInstalledEggs.length;
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+
+      return { x: startX + col * gapX, y: startY + row * gapY };
+    }
+
+    function checkBaseDeposit() {
+      if (holding && playerWorld.x < myBaseWorld.x + myBaseWorld.w &&
+          playerWorld.y > myBaseWorld.y && playerWorld.y < myBaseWorld.y + myBaseWorld.h) {
+
+        const pos = getNextBaseEggPosition();
+
+        baseInstalledEggs.push({
+          x: pos.x,
+          y: pos.y,
+          name: holding.name,
+          color: holding.color,
+          pattern: holding.pattern,
+          bonus: holding.bonus,
+          hatchEndTime: Date.now() + holding.hatchTime * 1000
+        });
+
+        showNotification("알을 훔쳐왔습니다!");
+
+        holding = null;
+        document.getElementById("holdingVal").innerText = "없음";
+      }
+    }
+
+    function hatchNearbyEgg() {
+      if (!nearbyEggToHatch) return;
+
+      const idx = baseInstalledEggs.indexOf(nearbyEggToHatch);
+      if (idx !== -1) {
+        baseSpeed += nearbyEggToHatch.bonus;
+        showNotification(`🎉 부화 성공! 속도 +${nearbyEggToHatch.bonus}`);
+        baseInstalledEggs.splice(idx, 1);
+      }
+    }
+
+    function runTreadmill() {
+      baseSpeed += 2;
+      showNotification("🏃 속도가 +2 증가했습니다!");
+    }
+
+    /* 조이스틱 컨트롤 이벤트 */
+    const joystickZone = document.getElementById("joystickZone");
+    const joystickKnob = document.getElementById("joystickKnob");
+    let isDragging = false;
+    const maxRadius = 30;
+
+    function handleJoystickMove(clientX, clientY) {
+      const rect = joystickZone.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      let dx = clientX - centerX;
+      let dy = clientY - centerY;
+      const distance = Math.hypot(dx, dy);
+
+      if (distance > maxRadius) {
+        dx = (dx / distance) * maxRadius;
+        dy = (dy / distance) * maxRadius;
+      }
+
+      joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+      moveInput.x = dx / maxRadius;
+      moveInput.y = dy / maxRadius;
+    }
+
+    function resetJoystick() {
+      isDragging = false;
+      joystickKnob.style.transform = `translate(0px, 0px)`;
+      moveInput = { x: 0, y: 0 };
+    }
+
+    joystickZone.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      joystickZone.setPointerCapture(e.pointerId);
+      handleJoystickMove(e.clientX, e.clientY);
+    });
+
+    joystickZone.addEventListener("pointermove", (e) => {
+      if (isDragging) handleJoystickMove(e.clientX, e.clientY);
+    });
+
+    joystickZone.addEventListener("pointerup", resetJoystick);
+    joystickZone.addEventListener("pointercancel", resetJoystick);
+
+    // 초기화 후 실행
+    spawnFieldEggs();
+    update();
+  </script>
+</body>
+</html>
