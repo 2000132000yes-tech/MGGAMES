@@ -30,13 +30,13 @@
     .header {
       width: 100%;
       background: #0f172a;
-      padding: 6px 12px;
+      padding: 8px 12px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.5);
       z-index: 10;
     }
     h1 {
       font-size: 16px;
-      margin: 2px 0 6px 0;
+      margin: 0 0 6px 0;
       color: #fbbf24;
     }
     .status-bar {
@@ -50,7 +50,7 @@
       border: 1px solid #334155;
     }
 
-    /* 모바일 세로형 게임 캔버스 */
+    /* 캔버스 영역 (비율 깨짐 방지) */
     #canvasWrapper {
       position: relative;
       width: 100%;
@@ -59,34 +59,37 @@
       justify-content: center;
       align-items: center;
       background: #020617;
+      padding: 4px 0;
     }
     canvas {
       background: #000000;
       border: 3px solid #334155;
       border-radius: 12px;
-      width: 94vw;
-      height: calc(94vw * (500 / 360));
-      max-height: 58vh;
+      aspect-ratio: 360 / 520;
+      max-width: 95vw;
+      max-height: 52vh;
+      object-fit: contain;
       box-shadow: 0 8px 20px rgba(0,0,0,0.8);
     }
 
-    /* 하단 조작 영역 */
+    /* 하단 조작 영역 (위로 끌어올림) */
     .controls-container {
       width: 100%;
-      padding: 10px 16px 20px 16px;
+      padding: 16px 20px 45px 20px; /* 하단 패딩을 대폭 늘려 위로 업 */
       background: #0f172a;
-      border-top-left-radius: 16px;
-      border-top-right-radius: 16px;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+      box-shadow: 0 -6px 20px rgba(0,0,0,0.6);
+      z-index: 20;
     }
 
     /* 조이스틱 */
     #joystickZone {
-      width: 100px;
-      height: 100px;
+      width: 105px;
+      height: 105px;
       background: rgba(30, 58, 138, 0.4);
       border: 2px solid #3b82f6;
       border-radius: 50%;
@@ -94,8 +97,8 @@
       touch-action: none;
     }
     #joystickKnob {
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       background: #60a5fa;
       border: 2px solid #ffffff;
       border-radius: 50%;
@@ -109,19 +112,19 @@
     .btn-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      width: 55%;
+      gap: 10px;
+      width: 52%;
     }
     .btn {
       color: white;
       border: none;
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
       font-weight: bold;
-      font-size: 13px;
+      font-size: 14px;
       width: 100%;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      transition: all 0.1s;
+      transition: transform 0.1s;
     }
     .btn:active { transform: scale(0.95); opacity: 0.9; }
 
@@ -132,7 +135,6 @@
     }
     .btn-hatch { 
       background: #d97706; 
-      color: #ffffff;
       animation: pulse 1s infinite alternate; 
     }
 
@@ -145,7 +147,7 @@
 <body>
 
   <div class="header">
-    <h1>🥚 계란을 훔치다! (Mobile)</h1>
+    <h1>🥚 계란을 훔치다!</h1>
     <div class="status-bar">
       <div>⚡ 속도: <span id="speedVal">5</span></div>
       <div>🎒 들기: <span id="holdingVal">없음</span></div>
@@ -154,18 +156,18 @@
   </div>
 
   <div id="canvasWrapper">
-    <!-- 모바일 세로비율 캔버스 (360 x 500) -->
-    <canvas id="gameCanvas" width="360" height="500"></canvas>
+    <!-- 정비율 해상도 (360 x 520) -->
+    <canvas id="gameCanvas" width="360" height="520"></canvas>
   </div>
 
-  <!-- 하단 컨트롤 터치 영역 -->
+  <!-- 하단 컨트롤 영역 -->
   <div class="controls-container">
     <!-- 조이스틱 -->
     <div id="joystickZone">
       <div id="joystickKnob"></div>
     </div>
 
-    <!-- 기능 버튼들 -->
+    <!-- 버튼 모음 -->
     <div class="btn-group">
       <button class="btn btn-treadmill" onclick="runTreadmill()">🏃 런닝머신 (+2)</button>
       <button id="pickupBtn" class="btn btn-pickup" style="display: none;" onclick="pickUpEgg()">🖐️ 알 줍기!</button>
@@ -181,23 +183,21 @@
     let holding = null;
 
     // 플레이어
-    const playerWorld = { x: 100, y: 250, size: 24 };
+    const playerWorld = { x: 100, y: 260, size: 24 };
 
     // 내 기지
-    const myBaseWorld = { x: -50, y: 50, w: 180, h: 400 };
+    const myBaseWorld = { x: -50, y: 50, w: 180, h: 420 };
 
-    // 설치된 알 및 필드 알
     const baseInstalledEggs = [];
     let fieldEggs = [];
 
-    // 타이머
     let lastResetTime = Date.now();
     const RESET_INTERVAL = 30000;
 
     // 맵 수직/수평 경계
     const MAP_LIMIT = {
       minY: 40,
-      maxY: 460,
+      maxY: 480,
       minX: -50,
       maxX: 1950
     };
@@ -215,7 +215,6 @@
     let eggToPickUp = null;
     let nearbyEggToHatch = null;
 
-    // 필드 알 생성
     function spawnFieldEggs() {
       fieldEggs = [];
       ZONES.forEach(zone => {
@@ -234,7 +233,6 @@
       lastResetTime = Date.now();
     }
 
-    // 플레이어 그리기
     function drawRoundRect(x, y, width, height, radius, color) {
       ctx.fillStyle = color;
       ctx.beginPath();
@@ -250,7 +248,6 @@
       ctx.stroke();
     }
 
-    // 알 그리기
     function drawEgg(x, y, mainColor, patternColor, scale = 1) {
       ctx.save();
       ctx.translate(x, y);
@@ -274,7 +271,6 @@
       ctx.restore();
     }
 
-    // 석재 벽 그리기 (화면 깨짐 완벽 방지)
     function drawMapWalls(cameraX, cameraY) {
       ctx.fillStyle = "#1e293b";
       ctx.strokeStyle = "#475569";
@@ -287,7 +283,6 @@
       const bottomY = MAP_LIMIT.maxY - cameraY;
       const mapWidth = MAP_LIMIT.maxX - MAP_LIMIT.minX + wallThick * 2;
 
-      // 상/하/좌/우 벽
       ctx.fillRect(leftX, topY, mapWidth, wallThick);
       ctx.strokeRect(leftX, topY, mapWidth, wallThick);
 
@@ -301,27 +296,21 @@
       ctx.strokeRect(rightX, topY, wallThick, MAP_LIMIT.maxY - MAP_LIMIT.minY + wallThick * 2);
     }
 
-    // 프레임 업데이트 루프
     function update() {
-      // 위치 업데이트
       playerWorld.x += moveInput.x * speed * 0.7;
       playerWorld.y += moveInput.y * speed * 0.7;
 
-      // 외곽 벽 이동 제한
       if (playerWorld.x < MAP_LIMIT.minX + 15) playerWorld.x = MAP_LIMIT.minX + 15;
       if (playerWorld.x > MAP_LIMIT.maxX - 15) playerWorld.x = MAP_LIMIT.maxX - 15;
       if (playerWorld.y < MAP_LIMIT.minY + 15) playerWorld.y = MAP_LIMIT.minY + 15;
       if (playerWorld.y > MAP_LIMIT.maxY - 15) playerWorld.y = MAP_LIMIT.maxY - 15;
 
-      // 카메라는 플레이어를 (180, 250)에 위치시킴
       const cameraX = playerWorld.x - 180;
-      const cameraY = playerWorld.y - 250;
+      const cameraY = playerWorld.y - 260;
 
-      // 화면 지우기 (잔상 방지)
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 타이머 업데이트
       const elapsed = Date.now() - lastResetTime;
       const remainResetSec = Math.max(0, Math.ceil((RESET_INTERVAL - elapsed) / 1000));
       document.getElementById("resetTimer").innerText = remainResetSec;
@@ -329,7 +318,6 @@
         spawnFieldEggs();
       }
 
-      // 구역 배경 그리기
       ZONES.forEach(zone => {
         const zSX = zone.minX - cameraX;
         const zWidth = zone.maxX - zone.minX;
@@ -337,10 +325,8 @@
         ctx.fillRect(zSX, 0, zWidth, canvas.height);
       });
 
-      // 벽 그리기
       drawMapWalls(cameraX, cameraY);
 
-      // 내 기지
       const baseSX = myBaseWorld.x - cameraX;
       const baseSY = myBaseWorld.y - cameraY;
       ctx.fillStyle = "#854d0e";
@@ -353,7 +339,6 @@
       ctx.font = "bold 13px Arial";
       ctx.fillText("내 기지 🏡", baseSX + 55, baseSY + 25);
 
-      // 기지 안 설치된 알들
       const now = Date.now();
       nearbyEggToHatch = null;
 
@@ -381,7 +366,6 @@
         }
       });
 
-      // 필드 알 감지 및 '알 줍기' 버튼 활성화
       eggToPickUp = null;
       fieldEggs.forEach(e => {
         const eggSX = e.x - cameraX;
@@ -402,24 +386,21 @@
         }
       });
 
-      // 버튼 노출 처리
       document.getElementById("pickupBtn").style.display = eggToPickUp ? "block" : "none";
       document.getElementById("hatchBtn").style.display = nearbyEggToHatch ? "block" : "none";
 
-      // 플레이어 (화면 중앙 고정: 180, 250)
-      drawRoundRect(180 - playerWorld.size/2, 250 - playerWorld.size/2, playerWorld.size, playerWorld.size, 8, "#f59e0b");
+      // 플레이어
+      drawRoundRect(180 - playerWorld.size/2, 260 - playerWorld.size/2, playerWorld.size, playerWorld.size, 8, "#f59e0b");
 
-      // 머리 위 들고 있는 알
       if (holding) {
         const bounce = Math.sin(Date.now() / 150) * 3;
-        drawEgg(180, 250 - playerWorld.size - 6 + bounce, holding.color, holding.pattern, 0.75);
+        drawEgg(180, 260 - playerWorld.size - 6 + bounce, holding.color, holding.pattern, 0.75);
       }
 
       checkBaseDeposit();
       requestAnimationFrame(update);
     }
 
-    // 알 줍기 버튼 클릭 이벤트
     function pickUpEgg() {
       if (!eggToPickUp || holding) return;
 
@@ -434,7 +415,6 @@
       }
     }
 
-    // 기지 안 지그재그 보관 위치
     function getNextBaseEggPosition() {
       const startX = myBaseWorld.x + 35;
       const startY = myBaseWorld.y + 60;
@@ -449,7 +429,6 @@
       return { x: startX + col * gapX, y: startY + row * gapY };
     }
 
-    // 기지 자동 입고 감지
     function checkBaseDeposit() {
       if (holding && playerWorld.x < myBaseWorld.x + myBaseWorld.w &&
           playerWorld.y > myBaseWorld.y && playerWorld.y < myBaseWorld.y + myBaseWorld.h) {
@@ -472,7 +451,6 @@
       }
     }
 
-    // 부화 버튼 클릭 이벤트
     function hatchNearbyEgg() {
       if (!nearbyEggToHatch) return;
 
@@ -490,7 +468,7 @@
       document.getElementById("speedVal").innerText = speed;
     }
 
-    /* 조이스틱 터치 이벤트 */
+    /* 조이스틱 */
     const joystickZone = document.getElementById("joystickZone");
     const joystickKnob = document.getElementById("joystickKnob");
     let isDragging = false;
@@ -534,7 +512,6 @@
     joystickZone.addEventListener("pointerup", resetJoystick);
     joystickZone.addEventListener("pointercancel", resetJoystick);
 
-    // 실행 시작
     spawnFieldEggs();
     update();
   </script>
