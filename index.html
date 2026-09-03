@@ -13,7 +13,7 @@
       font-family: monospace, sans-serif;
     }
 
-    /* 알 아이콘 버튼 */
+    /* 알 아이콘 메인 버튼 */
     .egg-btn {
       display: inline-flex;
       justify-content: center;
@@ -33,7 +33,7 @@
       background-color: #f1f5f9;
     }
 
-    /* 모달 배경 */
+    /* 모달 팝업 */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -47,7 +47,6 @@
       z-index: 1000;
     }
 
-    /* 팝업 창 */
     .modal-content {
       position: relative;
       width: 85vw;
@@ -58,13 +57,13 @@
       overflow: hidden;
     }
 
-    /* 위쪽 수직 구조 월드 맵 */
+    /* 수직 필드 */
     .world {
       position: absolute;
-      width: 2000px;
+      width: 1200px;
       height: 2500px;
       bottom: 0;
-      left: -800px;
+      left: -400px;
       background: linear-gradient(
         to top,
         #86efac 0px, #86efac 500px,       /* 1: 연두 */
@@ -75,27 +74,33 @@
       );
     }
 
-    /* 울타리 */
-    .fence {
+    /* 뒤쪽 울타리 (1구역 울타리 안쪽 영역 표시) */
+    .fence-zone {
+      position: absolute;
+      bottom: 0;
+      left: 100px;
+      width: 1000px;
+      height: 250px;
+      border: 6px dashed #a16207;
+      background-color: rgba(254, 240, 138, 0.2);
+    }
+
+    /* 외곽 테두리 이동 제한 벽 시각화 */
+    .world-walls {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 40px,
-        rgba(0, 0, 0, 0.12) 40px,
-        rgba(0, 0, 0, 0.12) 46px
-      );
+      border: 12px solid #0f172a;
+      pointer-events: none;
     }
 
-    /* 울타리 위 러닝머신 */
+    /* 러닝머신 (캐릭터 접근 가능 위치로 조정) */
     .treadmill {
       position: absolute;
-      bottom: 150px;
-      left: 960px;
+      bottom: 50px;
+      left: 580px;
       width: 70px;
       height: 90px;
       background-color: #334155;
@@ -107,6 +112,7 @@
       justify-content: space-between;
       padding: 5px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      z-index: 2;
     }
 
     .treadmill-screen {
@@ -120,16 +126,38 @@
       width: 100%;
       height: 55px;
       background: repeating-linear-gradient(
-        0deg,
-        #0f172a,
-        #0f172a 8px,
-        #475569 8px,
-        #475569 12px
+        0deg, #0f172a, #0f172a 8px, #475569 8px, #475569 12px
       );
       border-radius: 4px;
     }
 
-    /* 왼쪽 위 빨간색 X 버튼 */
+    /* 필드에 떨어져 있는 알 오라 */
+    .field-egg {
+      position: absolute;
+      font-size: 24px;
+      z-index: 3;
+    }
+
+    /* 보관소에 정리된 알 오라 및 부화 상태 타이머 */
+    .held-egg {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 3;
+    }
+
+    .egg-timer {
+      font-size: 11px;
+      font-weight: bold;
+      color: #000000;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 1px 4px;
+      border-radius: 4px;
+      margin-bottom: -2px;
+    }
+
+    /* 왼쪽 위 닫기 버튼 */
     .close-btn {
       position: absolute;
       top: 15px;
@@ -154,7 +182,7 @@
       background-color: #dc2626;
     }
 
-    /* 왼쪽 아래 UI 스탯 */
+    /* 왼쪽 아래 스탯 UI */
     .stats-ui {
       position: absolute;
       bottom: 20px;
@@ -174,10 +202,29 @@
       gap: 6px;
     }
 
-    .stat-s { color: #3b82f6; } /* 파란색 S:속도 */
-    .stat-m { color: #22c55e; } /* 초록색 M:000 */
+    .stat-s { color: #3b82f6; }
+    .stat-m { color: #22c55e; }
 
-    /* 중앙 고정 캐릭터 */
+    /* 알 부화 알림 상단 팝업 버튼 */
+    .hatch-alert-btn {
+      display: none;
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #f59e0b;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    /* 중앙 캐릭터 */
     .character {
       position: absolute;
       top: 50%;
@@ -192,7 +239,7 @@
       z-index: 5;
     }
 
-    /* 오른쪽 아래 조이스틱 */
+    /* 조이스틱 UI */
     .joystick-base {
       position: absolute;
       bottom: 25px;
@@ -220,16 +267,19 @@
 </head>
 <body>
 
-  <!-- 알 아이콘 버튼 -->
+  <!-- 알 아이콘 메인 버튼 -->
   <button class="egg-btn" id="openModal">🥚</button>
 
-  <!-- 버튼 누르면 나오는 창 -->
+  <!-- 게임 메인 창 -->
   <div class="modal-overlay" id="modal">
     <div class="modal-content" id="modalContent">
-      <!-- 왼쪽 위 빨간색 X 버튼 -->
+      <!-- 닫기 버튼 -->
       <button class="close-btn" id="closeModal">✕</button>
 
-      <!-- 왼쪽 아래 스탯 UI (하늘색 신발 + 파란색 S / 돈 아이콘 + 초록색 M) -->
+      <!-- 부화 가능 알림 토스트 버튼 -->
+      <button class="hatch-alert-btn" id="hatchAlertBtn">알 부화!</button>
+
+      <!-- 왼쪽 아래 스탯 UI (고정된 M:000 표현) -->
       <div class="stats-ui">
         <div class="stat-row">
           <span style="color: #38bdf8; font-size: 20px;">👟</span>
@@ -241,20 +291,25 @@
         </div>
       </div>
 
-      <!-- 위쪽 수직 구조 월드 맵 -->
+      <!-- 월드 및 구역 바운더리 -->
       <div class="world" id="world">
-        <div class="fence"></div>
-        <!-- 울타리 위 러닝머신 -->
+        <!-- 뒤쪽 울타리 영역 (1구역 보관소) -->
+        <div class="fence-zone"></div>
+        <!-- 울타리 안쪽 접근하기 쉬운 위치의 러닝머신 -->
         <div class="treadmill">
           <div class="treadmill-screen"></div>
           <div class="treadmill-belt"></div>
         </div>
+        <!-- 외곽 이동 불가 벽 구조선 -->
+        <div class="world-walls"></div>
+        <!-- 알들이 동적으로 생성될 컨테이너 공간 -->
+        <div id="eggContainer"></div>
       </div>
 
-      <!-- 중앙 고정 캐릭터 -->
+      <!-- 고정 플레이어 캐릭터 -->
       <div class="character"></div>
 
-      <!-- 오른쪽 아래 조이스틱 -->
+      <!-- 조이스틱 컨트롤러 -->
       <div class="joystick-base" id="joyBase">
         <div class="joystick-stick" id="joyStick"></div>
       </div>
@@ -266,24 +321,65 @@
     const closeBtn = document.getElementById('closeModal');
     const modal = document.getElementById('modal');
     const world = document.getElementById('world');
+    const eggContainer = document.getElementById('eggContainer');
     const mText = document.getElementById('mText');
     const sText = document.getElementById('sText');
+    const hatchAlertBtn = document.getElementById('hatchAlertBtn');
 
     openBtn.addEventListener('click', () => modal.style.display = 'flex');
     closeBtn.addEventListener('click', () => modal.style.display = 'none');
 
-    // 조이스틱 변수
+    // 조이스틱 상태
     const joyBase = document.getElementById('joyBase');
     const joyStick = document.getElementById('joyStick');
     let isDragging = false;
     const maxRadius = 32;
 
-    // 카메라인 월드 좌표 및 속도
-    let cameraX = 0;
-    let cameraY = 0;
+    // 위치 좌표계 및 물리 변수
+    let posX = 600; // 초기 위치 x
+    let posY = 100; // 초기 위치 y
     let moveX = 0;
     let moveY = 0;
     let speed = 10.0;
+    let money = 0; // 고정 및 보유 머니 수치
+
+    // 알 데이터 및 타이머 관리
+    let fieldEggs = [];
+    let savedEggs = [];
+    let resetTimer = 30;
+
+    // 초기 필드 알 스폰
+    function spawnFieldEggs() {
+      // 기존 필드 알 소멸
+      fieldEggs.forEach(e => e.el.remove());
+      fieldEggs = [];
+
+      // 필드 상에 랜덤 5개의 알 생성
+      for (let i = 0; i < 5; i++) {
+        const x = Math.random() * 1000 + 100;
+        const y = Math.random() * 2000 + 350; // 울타리 외부 필드
+        
+        const el = document.createElement('div');
+        el.className = 'field-egg';
+        el.innerText = '🥚';
+        el.style.left = `${x}px`;
+        el.style.bottom = `${y}px`;
+        eggContainer.appendChild(el);
+
+        fieldEggs.push({ x, y, el });
+      }
+    }
+
+    spawnFieldEggs();
+
+    // 30초마다 울타리 외부 필드 알 전체 리셋
+    setInterval(() => {
+      resetTimer--;
+      if (resetTimer <= 0) {
+        resetTimer = 30;
+        spawnFieldEggs();
+      }
+    }, 1000);
 
     function handleStart() { isDragging = true; }
     function handleEnd() {
@@ -313,10 +409,22 @@
 
       joyStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
 
-      // 조이스틱 입력 + 현재 속도(S) 반영
       const speedFactor = (speed / 10) * 4.5;
       moveX = (deltaX / maxRadius) * speedFactor;
       moveY = (deltaY / maxRadius) * speedFactor;
+    }
+
+    // 울타리 내부 가지런한 알 정렬 위치 계산
+    function arrangeSavedEggs() {
+      savedEggs.forEach((egg, idx) => {
+        const row = Math.floor(idx / 5);
+        const col = idx % 5;
+        const x = 150 + col * 50;
+        const y = 50 + row * 60;
+
+        egg.el.style.left = `${x}px`;
+        egg.el.style.bottom = `${y}px`;
+      });
     }
 
     let lastTime = performance.now();
@@ -325,29 +433,96 @@
       if (modal.style.display === 'flex') {
         const delta = (now - lastTime) / 1000;
 
-        cameraX += moveX;
-        cameraY -= moveY;
+        // 월드 벽 경계 제한 (나갈 수 없는 벽 처리)
+        posX += moveX;
+        posY -= moveY;
 
-        if (cameraY < 0) cameraY = 0;
-        if (cameraY > 2100) cameraY = 2100;
+        if (posX < 30) posX = 30;
+        if (posX > 1170) posX = 1170;
+        if (posY < 30) posY = 30;
+        if (posY > 2470) posY = 2470;
 
-        world.style.transform = `translate(${-cameraX}px, ${cameraY}px)`;
+        // 카메라 이동 트랜스폼
+        const bounds = modal.querySelector('.modal-content').getBoundingClientRect();
+        const viewOffsetX = posX - bounds.width / 2;
+        const viewOffsetY = posY - bounds.height / 2;
 
-        // 러닝머신 위 감지 (초당 +0.5 속도 증가)
-        const isOnTreadmill = Math.abs(cameraX - 160) < 35 && Math.abs(cameraY - 150) < 45;
-        if (isOnTreadmill) {
+        world.style.transform = `translate(${-viewOffsetX}px, ${viewOffsetY}px)`;
+
+        // 러닝머신 터치 감지 (초당 0.5 속도 상승)
+        if (Math.abs(posX - 615) < 35 && Math.abs(posY - 95) < 45) {
           speed += 0.5 * delta;
         }
 
-        // 스탯 텍스트 표시
+        // 필드 알 습득 체크 및 울타리 내 정렬 배치
+        for (let i = fieldEggs.length - 1; i >= 0; i--) {
+          const e = fieldEggs[i];
+          if (Math.hypot(posX - e.x, posY - e.y) < 35) {
+            e.el.remove();
+            fieldEggs.splice(i, 1);
+
+            // 습득한 알 구조 요소 바인딩
+            const heldEl = document.createElement('div');
+            heldEl.className = 'held-egg';
+            heldEl.innerHTML = `<span class="egg-timer">10s</span><span>🥚</span>`;
+            eggContainer.appendChild(heldEl);
+
+            savedEggs.push({
+              el: heldEl,
+              timerEl: heldEl.querySelector('.egg-timer'),
+              iconEl: heldEl.querySelectorAll('span')[1],
+              timeLeft: 10,
+              readyToHatch: false
+            });
+
+            arrangeSavedEggs();
+          }
+        }
+
+        // 보관 알 타이머 및 부화 감지 처리
+        let hasHatchableEgg = false;
+        savedEggs.forEach(egg => {
+          if (!egg.readyToHatch) {
+            egg.timeLeft -= delta;
+            if (egg.timeLeft <= 0) {
+              egg.timeLeft = 0;
+              egg.readyToHatch = true;
+              egg.timerEl.innerText = '!';
+              egg.timerEl.style.backgroundColor = '#f59e0b';
+              egg.timerEl.style.color = '#ffffff';
+            } else {
+              egg.timerEl.innerText = `${Math.ceil(egg.timeLeft)}s`;
+            }
+          }
+          if (egg.readyToHatch) {
+            hasHatchableEgg = true;
+          }
+        });
+
+        // 조건부 부화 팝업 알림 토출
+        hatchAlertBtn.style.display = hasHatchableEgg ? 'block' : 'none';
+
+        // 스탯 표시 갱신
         sText.innerText = `S:${speed.toFixed(1)}`;
-        const currentM = Math.floor(cameraY / 10);
-        mText.innerText = `M:${String(currentM).padStart(3, '0')}`;
+        mText.innerText = `M:${String(money).padStart(3, '0')}`;
       }
       lastTime = now;
       requestAnimationFrame(updateGame);
     }
 
+    // 알 부화 버튼 터치 시 처리
+    hatchAlertBtn.addEventListener('click', () => {
+      for (let i = savedEggs.length - 1; i >= 0; i--) {
+        if (savedEggs[i].readyToHatch) {
+          savedEggs[i].el.remove();
+          savedEggs.splice(i, 1);
+          money += 50; // 부화 성공 보상
+        }
+      }
+      arrangeSavedEggs();
+    });
+
+    // 조이스틱 이벤트 바인딩
     joyBase.addEventListener('mousedown', handleStart);
     window.addEventListener('mouseup', handleEnd);
     window.addEventListener('mousemove', handleMove);
