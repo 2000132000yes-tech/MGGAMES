@@ -30,7 +30,7 @@
             height: 60px;
             background-color: #f5f5f5;
             border: 2px solid #e0e0e0;
-            border-radius: 16px; /* 끝이 뭉툭한 모서리 */
+            border-radius: 16px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -46,15 +46,10 @@
             user-select: none;
         }
 
-        /* 마우스 호버 시 기본 상태 유지 */
-        .egg-btn:hover {
-            background-color: #f5f5f5; /* 노란색 변화 제거 */
-        }
-
-        /* 버튼 클릭(누를 때) 및 액티브 시 애니메이션 효과 */
+        /* 클릭 시 커졌다 작아지는 애니메이션 */
         .egg-btn:active,
         .egg-btn.pop-animation {
-            transform: scale(1.15); /* 눌렀을 때 커짐 */
+            transform: scale(1.15);
         }
 
         /* 버튼 아래 검은색 작은 글씨 */
@@ -69,23 +64,24 @@
 <body>
 
     <div class="egg-container">
-        <button class="egg-btn" id="eggButton" onclick="triggerPopEffect()">
+        <button class="egg-btn" id="eggButton" onclick="openNewTab()">
             <span class="egg-icon">🥚</span>
         </button>
         <span class="egg-label">계란 훔치기</span>
     </div>
 
     <script>
-        function triggerPopEffect() {
+        function openNewTab() {
             const btn = document.getElementById('eggButton');
             
-            // 커졌다 작아지는 애니메이션 적용
+            // 1. 클릭 시 통통 튀는 애니메이션 실행
             btn.classList.add('pop-animation');
+            
+            // 2. 애니메이션이 보여진 뒤(0.15초 후) 새 탭에서 주소 열기
             setTimeout(() => {
                 btn.classList.remove('pop-animation');
-            }, 150); // 0.15초 뒤 다시 원래 크기로 축소
-
-            // 여기에 나중에 원하는 계란 훔치기 게임 로직을 추가하시면 됩니다.
+                window.open("https://2000132000yes-tech.github.io/Stealing-eggs/", "_blank");
+            }, 150);
         }
     </script>
 
