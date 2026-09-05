@@ -1,560 +1,63 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>웹사이트</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    
-    body {
-      background-color: #ffffff;
-      padding: 20px;
-      font-family: monospace, sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Egg Game</title>
+    <style>
+        /* 하얀 배경 설정 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
 
-    .egg-btn {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      width: 50px;
-      height: 50px;
-      background-color: #f8fafc;
-      border: 2px solid #e2e8f0;
-      border-radius: 14px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      cursor: pointer;
-      font-size: 24px;
-    }
+        /* 왼쪽 위 구석 달걀 버튼 스타일 */
+        .egg-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
 
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0, 0, 0, 0.4);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
+        /* 마우스 호버 효과 */
+        .egg-btn:hover {
+            background-color: #ffeaa7;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
 
-    .modal-content {
-      position: relative;
-      width: 85vw;
-      height: 80vh;
-      background-color: #86efac;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
-    }
-
-    /* 가로 폭을 적당하게 줄인 월드 (600px) */
-    .world {
-      position: absolute;
-      width: 600px;
-      height: 2500px;
-      bottom: 0;
-      left: 0;
-      background: linear-gradient(
-        to top,
-        #86efac 0px, #86efac 500px,
-        #22c55e 500px, #22c55e 1000px,
-        #3b82f6 1000px, #3b82f6 1500px,
-        #a855f7 1500px, #a855f7 2000px,
-        #ffedd5 2000px, #ffedd5 2500px
-      );
-    }
-
-    /* 실시간 좌우상하 제한 벽 테두리 */
-    .world-walls {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: 8px solid #0f172a;
-      pointer-events: none;
-      z-index: 4;
-    }
-
-    /* 울타리 영역 (보관소) */
-    .fence-zone {
-      position: absolute;
-      bottom: 10px;
-      left: 50px;
-      width: 500px;
-      height: 200px;
-      border: 4px dashed #a16207;
-      background-color: rgba(254, 240, 138, 0.25);
-    }
-
-    /* 러닝머신 위치 및 디자인 */
-    .treadmill {
-      position: absolute;
-      bottom: 50px;
-      left: 265px;
-      width: 70px;
-      height: 90px;
-      background-color: #334155;
-      border: 3px solid #0f172a;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 5px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      z-index: 2;
-    }
-
-    .treadmill-screen { width: 70%; height: 12px; background-color: #38bdf8; border-radius: 3px; }
-    .treadmill-belt {
-      width: 100%;
-      height: 55px;
-      background: repeating-linear-gradient(0deg, #0f172a, #0f172a 8px, #475569 8px, #475569 12px);
-      border-radius: 4px;
-    }
-
-    .field-egg {
-      position: absolute;
-      font-size: 24px;
-      z-index: 3;
-      transform: translate(-50%, 50%);
-    }
-
-    .held-egg {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      z-index: 3;
-      transform: translate(-50%, 50%);
-    }
-
-    .egg-timer {
-      font-size: 11px;
-      font-weight: bold;
-      color: #000;
-      background-color: rgba(255, 255, 255, 0.85);
-      padding: 1px 4px;
-      border-radius: 4px;
-      margin-bottom: -2px;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      width: 36px;
-      height: 36px;
-      background-color: #ef4444;
-      color: #ffffff;
-      border: none;
-      border-radius: 10px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
-
-    .stats-ui {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      z-index: 10;
-      font-weight: bold;
-      font-size: 18px;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
-    }
-
-    .stat-row { display: flex; align-items: center; gap: 6px; }
-    .stat-s { color: #3b82f6; }
-    .stat-m { color: #22c55e; }
-
-    /* 우측 하단 알 줍기/놓기 액션 버튼 */
-    .pickup-btn {
-      display: none;
-      position: absolute;
-      bottom: 140px;
-      right: 35px;
-      width: 80px;
-      height: 45px;
-      background-color: #3b82f6;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: 14px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      cursor: pointer;
-      z-index: 10;
-    }
-
-    .hatch-alert-btn {
-      display: none;
-      position: absolute;
-      top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #f59e0b;
-      color: #ffffff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      cursor: pointer;
-      z-index: 10;
-    }
-
-    /* 캐릭터 및 들고 있는 알 오버레이 모션 */
-    .character {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 36px;
-      height: 36px;
-      background-color: #3b82f6;
-      border: 3px solid #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      transform: translate(-50%, -50%);
-      z-index: 5;
-    }
-
-    /* 알 들기 모션 (캐릭터 머리 위에 표시) */
-    .carrying-egg {
-      display: none;
-      position: absolute;
-      top: -24px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 20px;
-      animation: carryBounce 0.6s infinite alternate ease-in-out;
-    }
-
-    @keyframes carryBounce {
-      0% { transform: translate(-50%, 0px); }
-      100% { transform: translate(-50%, -6px); }
-    }
-
-    .joystick-base {
-      position: absolute;
-      bottom: 25px;
-      right: 25px;
-      width: 100px;
-      height: 100px;
-      background-color: rgba(0, 0, 0, 0.12);
-      border: 2px solid rgba(0, 0, 0, 0.2);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      touch-action: none;
-      z-index: 10;
-    }
-
-    .joystick-stick {
-      width: 45px;
-      height: 45px;
-      background-color: rgba(0, 0, 0, 0.35);
-      border-radius: 50%;
-      position: absolute;
-    }
-  </style>
+        /* 마우스 클릭 효과 */
+        .egg-btn:active {
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body>
 
-  <button class="egg-btn" id="openModal">🥚</button>
+    <!-- 왼쪽 위 달걀 버튼 -->
+    <button class="egg-btn" onclick="eggButtonClick()">
+        <span>🥚</span>
+        <span>달걀</span>
+    </button>
 
-  <div class="modal-overlay" id="modal">
-    <div class="modal-content" id="modalContent">
-      <button class="close-btn" id="closeModal">✕</button>
-      <button class="hatch-alert-btn" id="hatchAlertBtn">알 부화!</button>
-      <button class="pickup-btn" id="pickupBtn">알 줍기</button>
-
-      <div class="stats-ui">
-        <div class="stat-row">
-          <span style="color: #38bdf8; font-size: 20px;">👟</span>
-          <span class="stat-s" id="sText">S:10.0</span>
-        </div>
-        <div class="stat-row">
-          <span style="font-size: 20px;">💵</span>
-          <span class="stat-m" id="mText">M:000</span>
-        </div>
-      </div>
-
-      <div class="world" id="world">
-        <div class="fence-zone"></div>
-        <div class="treadmill" id="treadmill">
-          <div class="treadmill-screen"></div>
-          <div class="treadmill-belt"></div>
-        </div>
-        <div class="world-walls"></div>
-        <div id="eggContainer"></div>
-      </div>
-
-      <!-- 캐릭터 및 들기 애니메이션 구조 -->
-      <div class="character">
-        <div class="carrying-egg" id="carryingEgg">🥚</div>
-      </div>
-
-      <div class="joystick-base" id="joyBase">
-        <div class="joystick-stick" id="joyStick"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const openBtn = document.getElementById('openModal');
-    const closeBtn = document.getElementById('closeModal');
-    const modal = document.getElementById('modal');
-    const world = document.getElementById('world');
-    const eggContainer = document.getElementById('eggContainer');
-    const mText = document.getElementById('mText');
-    const sText = document.getElementById('sText');
-    const hatchAlertBtn = document.getElementById('hatchAlertBtn');
-    const pickupBtn = document.getElementById('pickupBtn');
-    const carryingEgg = document.getElementById('carryingEgg');
-
-    openBtn.addEventListener('click', () => modal.style.display = 'flex');
-    closeBtn.addEventListener('click', () => modal.style.display = 'none');
-
-    const joyBase = document.getElementById('joyBase');
-    const joyStick = document.getElementById('joyStick');
-    let isDragging = false;
-    const maxRadius = 32;
-
-    // 위치 좌표 (가로폭 600px 중앙 상차림)
-    let posX = 300;
-    let posY = 90;
-    let moveX = 0;
-    let moveY = 0;
-    let speed = 10.0;
-    let money = 0;
-
-    let fieldEggs = [];
-    let savedEggs = [];
-    let isCarrying = false;
-    let nearbyEggIndex = -1;
-    let resetTimer = 30;
-
-    function spawnFieldEggs() {
-      fieldEggs.forEach(e => e.el.remove());
-      fieldEggs = [];
-
-      for (let i = 0; i < 5; i++) {
-        const x = Math.random() * 500 + 50;
-        const y = Math.random() * 1900 + 300;
-        
-        const el = document.createElement('div');
-        el.className = 'field-egg';
-        el.innerText = '🥚';
-        el.style.left = `${x}px`;
-        el.style.bottom = `${y}px`;
-        eggContainer.appendChild(el);
-
-        fieldEggs.push({ x, y, el });
-      }
-    }
-
-    spawnFieldEggs();
-
-    setInterval(() => {
-      resetTimer--;
-      if (resetTimer <= 0) {
-        resetTimer = 30;
-        spawnFieldEggs();
-      }
-    }, 1000);
-
-    function handleStart() { isDragging = true; }
-    function handleEnd() {
-      isDragging = false;
-      joyStick.style.transform = 'translate(0px, 0px)';
-      moveX = 0;
-      moveY = 0;
-    }
-
-    function handleMove(e) {
-      if (!isDragging) return;
-      const rect = joyBase.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-      let deltaX = clientX - centerX;
-      let deltaY = clientY - centerY;
-
-      const distance = Math.hypot(deltaX, deltaY);
-      if (distance > maxRadius) {
-        deltaX = (deltaX / distance) * maxRadius;
-        deltaY = (deltaY / distance) * maxRadius;
-      }
-
-      joyStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-
-      const speedFactor = (speed / 10) * 4.5;
-      moveX = (deltaX / maxRadius) * speedFactor;
-      moveY = (deltaY / maxRadius) * speedFactor;
-    }
-
-    // 알 줍기 및 울타리 내 내려놓기
-    pickupBtn.addEventListener('click', () => {
-      if (!isCarrying && nearbyEggIndex !== -1) {
-        // 알 줍기
-        const e = fieldEggs[nearbyEggIndex];
-        e.el.remove();
-        fieldEggs.splice(nearbyEggIndex, 1);
-        isCarrying = true;
-        carryingEgg.style.display = 'block';
-        pickupBtn.style.display = 'none';
-      } else if (isCarrying) {
-        // 울타리 안쪽에 들어왔을 때만 내려놓을 수 있음
-        const inFence = posX >= 50 && posX <= 550 && posY >= 10 && posY <= 210;
-        if (inFence) {
-          isCarrying = false;
-          carryingEgg.style.display = 'none';
-
-          const heldEl = document.createElement('div');
-          heldEl.className = 'held-egg';
-          heldEl.innerHTML = `<span class="egg-timer">10s</span><span>🥚</span>`;
-          eggContainer.appendChild(heldEl);
-
-          savedEggs.push({
-            el: heldEl,
-            timerEl: heldEl.querySelector('.egg-timer'),
-            timeLeft: 10,
-            readyToHatch: false
-          });
-
-          arrangeSavedEggs();
+    <script>
+        // 버튼 클릭 시 실행할 동작
+        function eggButtonClick() {
+            alert("달걀 버튼을 클릭하셨습니다!");
         }
-      }
-    });
-
-    function arrangeSavedEggs() {
-      savedEggs.forEach((egg, idx) => {
-        const row = Math.floor(idx / 5);
-        const col = idx % 5;
-        const x = 90 + col * 90;
-        const y = 40 + row * 50;
-
-        egg.el.style.left = `${x}px`;
-        egg.el.style.bottom = `${y}px`;
-      });
-    }
-
-    let lastTime = performance.now();
-
-    function updateGame(now) {
-      if (modal.style.display === 'flex') {
-        const delta = (now - lastTime) / 1000;
-
-        posX += moveX;
-        posY -= moveY;
-
-        // 좌우상하 완전한 실시간 충돌 벽 (월드 폭 600px, 높이 2500px 범위 제한)
-        if (posX < 25) posX = 25;
-        if (posX > 575) posX = 575;
-        if (posY < 25) posY = 25;
-        if (posY > 2475) posY = 2475;
-
-        const bounds = modal.querySelector('.modal-content').getBoundingClientRect();
-        const viewOffsetX = posX - bounds.width / 2;
-        const viewOffsetY = posY - bounds.height / 2;
-
-        world.style.transform = `translate(${-viewOffsetX}px, ${viewOffsetY}px)`;
-
-        // 정교해진 러닝머신 영역 감지 (X: 265~335, Y: 50~140)
-        if (posX >= 265 && posX <= 335 && posY >= 50 && posY <= 140) {
-          speed += 0.5 * delta;
-        }
-
-        // 근처 알 체크 및 줍기 버튼 활성화
-        nearbyEggIndex = -1;
-        if (!isCarrying) {
-          for (let i = 0; i < fieldEggs.length; i++) {
-            if (Math.hypot(posX - fieldEggs[i].x, posY - fieldEggs[i].y) < 40) {
-              nearbyEggIndex = i;
-              break;
-            }
-          }
-        }
-
-        // 버튼 상/하차 상태 제어
-        const inFence = posX >= 50 && posX <= 550 && posY >= 10 && posY <= 210;
-        if (!isCarrying && nearbyEggIndex !== -1) {
-          pickupBtn.innerText = "알 줍기";
-          pickupBtn.style.display = "block";
-        } else if (isCarrying && inFence) {
-          pickupBtn.innerText = "내려놓기";
-          pickupBtn.style.display = "block";
-        } else if (!isCarrying) {
-          pickupBtn.style.display = "none";
-        }
-
-        // 울타리 안쪽에 놓인 알만 타이머 감소 (초 카운트다운 진행)
-        let hasHatchableEgg = false;
-        savedEggs.forEach(egg => {
-          if (!egg.readyToHatch) {
-            egg.timeLeft -= delta;
-            if (egg.timeLeft <= 0) {
-              egg.timeLeft = 0;
-              egg.readyToHatch = true;
-              egg.timerEl.innerText = '!';
-              egg.timerEl.style.backgroundColor = '#f59e0b';
-              egg.timerEl.style.color = '#ffffff';
-            } else {
-              egg.timerEl.innerText = `${Math.ceil(egg.timeLeft)}s`;
-            }
-          }
-          if (egg.readyToHatch) {
-            hasHatchableEgg = true;
-          }
-        });
-
-        hatchAlertBtn.style.display = hasHatchableEgg ? 'block' : 'none';
-
-        sText.innerText = `S:${speed.toFixed(1)}`;
-        mText.innerText = `M:${String(money).padStart(3, '0')}`;
-      }
-      lastTime = now;
-      requestAnimationFrame(updateGame);
-    }
-
-    hatchAlertBtn.addEventListener('click', () => {
-      for (let i = savedEggs.length - 1; i >= 0; i--) {
-        if (savedEggs[i].readyToHatch) {
-          savedEggs[i].el.remove();
-          savedEggs.splice(i, 1);
-          money += 50;
-        }
-      }
-      arrangeSavedEggs();
-    });
-
-    joyBase.addEventListener('mousedown', handleStart);
-    window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('mousemove', handleMove);
-
-    joyBase.addEventListener('touchstart', handleStart);
-    window.addEventListener('touchend', handleEnd);
-    window.addEventListener('touchmove', handleMove);
-
-    requestAnimationFrame(updateGame);
-  </script>
+    </script>
 
 </body>
 </html>
